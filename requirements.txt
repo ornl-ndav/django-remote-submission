@@ -1,0 +1,3 @@
+django
+paramiko
+django-bootstrap-form
