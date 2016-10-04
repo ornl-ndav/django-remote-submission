@@ -6,11 +6,11 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-xs-6 col-xs-offset-3">
-      <form role="form">
+      <form role="form" method="POST">
         <legend>Form Title</legend>
         {% csrf_token %}
         {{ form | bootstrap }}
-        <input type="submit" value="Submit" />
+        <input class="btn btn-default" type="submit" value="Submit" />
       </form>
     </div>
   </div>

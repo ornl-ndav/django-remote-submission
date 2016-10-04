@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView, CreateView
+from django.urls import reverse_lazy
 from .models import Server, Job
 from .forms import JobForm
 
@@ -9,9 +10,13 @@ class ServerView(TemplateView):
 class JobView(TemplateView):
     template_name = 'remote_submission/job.html'
 
-class JobCreateView(FormView):
-    template_name = 'remote_submission/job_create.html'
+class JobCreateView(CreateView):
     form_class = JobForm
+    success_url = reverse_lazy('remote_submission:index')
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
 
 class IndexView(TemplateView):
     template_name = 'remote_submission/index.html'
