@@ -13,6 +13,7 @@ class JobView(TemplateView):
 class JobCreateView(CreateView):
     form_class = JobForm
     success_url = reverse_lazy('remote_submission:index')
+    template_name = 'remote_submission/job_create.html'
 
     def form_valid(self, form):
         form.instance.owner = self.request.user

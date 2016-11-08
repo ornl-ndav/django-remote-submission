@@ -5,6 +5,7 @@ from django.urls import reverse
 import threading
 import paramiko
 import io
+import select
 
 # Create your models here.
 
@@ -101,13 +102,17 @@ class Job(models.Model):
             sftp = client.open_sftp()
             sftp.putfo(io.StringIO(self.script), '/tmp/foobar.py')
 
-            stdin, stdout, stderr = client.exec_command(
-                command='python /tmp/foobar.py',
-            )
+            transport = client.get_transport()
+            channel = transport.open_session()
+            channel.setblocking(0)
+            channel.exec_command('python /tmp/foobar.py')
 
-            out = stdout.read()
-
-            print(out)
+            while True:
+                ready, _, _ = select.select([channel], [], [], 0.0)
+                if ready:
+                    print(channel.recv())
+                    if channel.exit_status_ready():
+                        break
 
             self.is_completed = True
 
@@ -115,7 +120,7 @@ class Job(models.Model):
                 callback(self)
 
         if self.is_submitted:
-            raise Exception("foobar")
+            raise Exception("Job was already submitted")
 
         t = threading.Thread(
             target=thread,
