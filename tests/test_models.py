@@ -8,18 +8,65 @@ test_django-remote-submission
 Tests for `django-remote-submission` models module.
 """
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from django_remote_submission import models
+from django_remote_submission.models import Server, Job, Log
 
 
-class TestDjango_remote_submission(TestCase):
-
+class ServerModelTest(TestCase):
     def setUp(self):
-        pass
+        self.server = Server.objects.create(
+            title='1-server-title',
+            hostname='1-server-hostname.invalid',
+        )
 
-    def test_something(self):
-        pass
+    def test_string_representation(self):
+        self.assertIn(str(self.server.title), str(self.server))
+        self.assertIn(str(self.server.hostname), str(self.server))
 
-    def tearDown(self):
-        pass
+
+class JobModelTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.get_or_create(username='foo')[0]
+
+        self.server = Server.objects.create(
+            title='1-server-title',
+            hostname='1-server-hostname.invalid',
+        )
+
+        self.job = Job.objects.create(
+            title='1-job-title',
+            program='1-job-program',
+            owner=self.user,
+            server=self.server,
+        )
+
+    def test_string_representation(self):
+        self.assertIn(str(self.job.title), str(self.job))
+
+
+class LogModelTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.get_or_create(username='foo')[0]
+
+        self.server = Server.objects.create(
+            title='1-server-title',
+            hostname='1-server-hostname.invalid',
+        )
+
+        self.job = Job.objects.create(
+            title='1-job-title',
+            program='1-job-program',
+            owner=self.user,
+            server=self.server,
+        )
+
+        self.log = Log.objects.create(
+            content='1-log-content',
+            job=self.job,
+        )
+
+    def test_string_representation(self):
+        self.assertIn(str(self.log.time), str(self.log))
+        self.assertIn(str(self.job), str(self.log))

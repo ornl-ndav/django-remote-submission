@@ -1,83 +1,12 @@
 # -*- coding: utf-8 -*-
-from django.conf.urls import url
-from django.views.generic import TemplateView
+from rest_framework.routers import DefaultRouter
 
-from . import views
+from .views import ServerViewSet, JobViewSet, LogViewSet
 
-urlpatterns = [
-    url(
-        regex="^Server/~create/$",
-        view=views.ServerCreateView.as_view(),
-        name='Server_create',
-    ),
-    url(
-        regex="^Server/(?P<pk>\d+)/~delete/$",
-        view=views.ServerDeleteView.as_view(),
-        name='Server_delete',
-    ),
-    url(
-        regex="^Server/(?P<pk>\d+)/$",
-        view=views.ServerDetailView.as_view(),
-        name='Server_detail',
-    ),
-    url(
-        regex="^Server/(?P<pk>\d+)/~update/$",
-        view=views.ServerUpdateView.as_view(),
-        name='Server_update',
-    ),
-    url(
-        regex="^Server/$",
-        view=views.ServerListView.as_view(),
-        name='Server_list',
-    ),
-	url(
-        regex="^Job/~create/$",
-        view=views.JobCreateView.as_view(),
-        name='Job_create',
-    ),
-    url(
-        regex="^Job/(?P<pk>\d+)/~delete/$",
-        view=views.JobDeleteView.as_view(),
-        name='Job_delete',
-    ),
-    url(
-        regex="^Job/(?P<pk>\d+)/$",
-        view=views.JobDetailView.as_view(),
-        name='Job_detail',
-    ),
-    url(
-        regex="^Job/(?P<pk>\d+)/~update/$",
-        view=views.JobUpdateView.as_view(),
-        name='Job_update',
-    ),
-    url(
-        regex="^Job/$",
-        view=views.JobListView.as_view(),
-        name='Job_list',
-    ),
-	url(
-        regex="^JobState/~create/$",
-        view=views.JobStateCreateView.as_view(),
-        name='JobState_create',
-    ),
-    url(
-        regex="^JobState/(?P<pk>\d+)/~delete/$",
-        view=views.JobStateDeleteView.as_view(),
-        name='JobState_delete',
-    ),
-    url(
-        regex="^JobState/(?P<pk>\d+)/$",
-        view=views.JobStateDetailView.as_view(),
-        name='JobState_detail',
-    ),
-    url(
-        regex="^JobState/(?P<pk>\d+)/~update/$",
-        view=views.JobStateUpdateView.as_view(),
-        name='JobState_update',
-    ),
-    url(
-        regex="^JobState/$",
-        view=views.JobStateListView.as_view(),
-        name='JobState_list',
-    ),
-	]
+
+router = DefaultRouter()
+router.register(r'servers', ServerViewSet)
+router.register(r'jobs', JobViewSet)
+router.register(r'logs', LogViewSet)
+
+urlpatterns = router.urls

@@ -1,90 +1,32 @@
 # -*- coding: utf-8 -*-
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    UpdateView,
-    ListView
-)
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import PageNumberPagination
 
-from .models import (
-	Server,
-	Job,
-	JobState,
-)
+from .models import Server, Job, Log
+from .serializers import ServerSerializer, JobSerializer, LogSerializer
 
 
-class ServerCreateView(CreateView):
-
-    model = Server
-
-
-class ServerDeleteView(DeleteView):
-
-    model = Server
+class StandardPagination(PageNumberPagination):
+    page_size = 5
 
 
-class ServerDetailView(DetailView):
-
-    model = Server
-
-
-class ServerUpdateView(UpdateView):
-
-    model = Server
+class ServerViewSet(viewsets.ModelViewSet):
+    queryset = Server.objects.all()
+    serializer_class = ServerSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = StandardPagination
 
 
-class ServerListView(ListView):
-
-    model = Server
-
-
-class JobCreateView(CreateView):
-
-    model = Job
+class JobViewSet(viewsets.ModelViewSet):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = StandardPagination
 
 
-class JobDeleteView(DeleteView):
-
-    model = Job
-
-
-class JobDetailView(DetailView):
-
-    model = Job
-
-
-class JobUpdateView(UpdateView):
-
-    model = Job
-
-
-class JobListView(ListView):
-
-    model = Job
-
-
-class JobStateCreateView(CreateView):
-
-    model = JobState
-
-
-class JobStateDeleteView(DeleteView):
-
-    model = JobState
-
-
-class JobStateDetailView(DetailView):
-
-    model = JobState
-
-
-class JobStateUpdateView(UpdateView):
-
-    model = JobState
-
-
-class JobStateListView(ListView):
-
-    model = JobState
-
+class LogViewSet(viewsets.ModelViewSet):
+    queryset = Log.objects.all()
+    serializer_class = LogSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = StandardPagination
