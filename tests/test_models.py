@@ -24,6 +24,7 @@ class ServerModelTest(TestCase):
     def test_string_representation(self):
         self.assertIn(str(self.server.title), str(self.server))
         self.assertIn(str(self.server.hostname), str(self.server))
+        self.assertIn(str(self.server.port), str(self.server))
 
 
 class JobModelTest(TestCase):

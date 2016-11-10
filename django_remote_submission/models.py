@@ -24,12 +24,18 @@ class Server(TimeStampedModel):
         max_length=100,
     )
 
+    port = models.IntegerField(
+        _('Server Port'),
+        help_text=_('The port to connect to for SSH (usually 22)'),
+        default=22,
+    )
+
     class Meta:
         verbose_name = _('server')
         verbose_name_plural = _('servers')
 
     def __str__(self):
-        return '{self.title} <{self.hostname}>'.format(self=self)
+        return '{self.title} <{self.hostname}:{self.port}>'.format(self=self)
 
 
 @python_2_unicode_compatible
