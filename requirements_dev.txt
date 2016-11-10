@@ -1,4 +1,7 @@
+-r requirements.txt
+
+# Utility to manage upgrading the version of the package
 bumpversion==0.5.3
+
+# Utility to load Python binaries
 wheel==0.29.0
-django>=1.9.6
-django-model-utils>=2.0

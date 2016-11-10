@@ -1,8 +1,14 @@
-django>=1.9.6
-coverage==4.2
-mock>=1.0.1
-flake8>=2.1.0
-tox>=1.7.0
-django-model-utils>=2.0
+-r requirements.txt
 
-# Additional test requirements go here
+# Check code coverage
+coverage==4.2
+
+# Mock functions for testing
+mock>=1.0.1
+
+# Check style of code
+flake8>=2.1.0
+
+# Run tests for different Python versions
+tox>=1.7.0
+
