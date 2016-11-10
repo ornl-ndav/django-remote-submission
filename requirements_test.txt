@@ -12,3 +12,5 @@ flake8>=2.1.0
 # Run tests for different Python versions
 tox>=1.7.0
 
+# Utility for working with environment variables
+django-environ>=0.4.0
