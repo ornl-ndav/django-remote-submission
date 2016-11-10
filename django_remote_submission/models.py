@@ -64,6 +64,18 @@ class Job(TimeStampedModel):
         default=STATUS.initial,
     )
 
+    remote_directory = models.CharField(
+        _('Job Remote Directory'),
+        help_text=_('The directory on the remote host to store the program'),
+        max_length=250,
+    )
+
+    remote_filename = models.CharField(
+        _('Job Remote Filename'),
+        help_text=_('The filename to store the program to (e.g. reduce.py)'),
+        max_length=250,
+    )
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         models.PROTECT,

@@ -41,6 +41,8 @@ class JobModelTest(TestCase):
             program='1-job-program',
             owner=self.user,
             server=self.server,
+            remote_directory='1-job-remote_directory',
+            remote_filename='1-job-remote_filename',
         )
 
     def test_string_representation(self):
