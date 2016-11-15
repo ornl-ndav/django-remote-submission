@@ -1,4 +1,8 @@
 from __future__ import absolute_import, unicode_literals, print_function
+import logging
+
+logger = logging.getLogger(__name__)
+
 import io
 import os.path
 import select
@@ -12,6 +16,9 @@ from .models import Log, Job
 try:
     from celery import shared_task
 except ImportError:
+    logger.info('Could not import Celery. '
+                'Tasks will not be implemented by Celery\'s queue.')
+
     def shared_task(func):
         return func
 
