@@ -81,7 +81,7 @@ class SubmitJobTaskTest(TestCase):
         model_saved = Mock()
         pre_save.connect(model_saved, sender=Job)
 
-        submit_job_to_server(job.pk, server, self.remote_password)
+        submit_job_to_server(job.pk, self.remote_password)
 
         self.assertEqual(Log.objects.count(), 5)
 
@@ -124,7 +124,7 @@ class SubmitJobTaskTest(TestCase):
             server=server,
         )
 
-        submit_job_to_server(job.pk, server, self.remote_password)
+        submit_job_to_server(job.pk, self.remote_password)
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.failure)

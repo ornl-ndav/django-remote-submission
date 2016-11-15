@@ -31,8 +31,6 @@ except ImportError:
 def submit_job_to_server(job_pk, password, username=None, client=None):
     job = Job.objects.get(pk=job_pk)
 
-    print('Starting job {}'.format(job))
-
     if username is None:
         username = job.owner.username
 
