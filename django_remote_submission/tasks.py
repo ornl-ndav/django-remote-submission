@@ -42,7 +42,7 @@ def submit_job_to_server(job_pk, server, password, username=None, client=None):
 
     sftp = client.open_sftp()
     path = os.path.join(job.remote_directory, job.remote_filename)
-    sftp.putfo(io.StringIO(six.u(job.program)), path)
+    sftp.putfo(six.StringIO(job.program), path)
 
     job.status = Job.STATUS.submitted
     job.save()
