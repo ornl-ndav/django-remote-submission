@@ -49,3 +49,5 @@ docs/_build
 /TAGS
 *~
 /.env
+/django_remote_submission/migrations/*.py
+!/django_remote_submission/migrations/__init__.py
