@@ -20,12 +20,18 @@ except ImportError:
                 'Tasks will not be implemented by Celery\'s queue.')
 
     def shared_task(func):
+        def delay(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        func.delay = delay
         return func
 
 
 @shared_task
-def submit_job_to_server(job_pk, server, password, username=None, client=None):
+def submit_job_to_server(job_pk, password, username=None, client=None):
     job = Job.objects.get(pk=job_pk)
+
+    print('Starting job {}'.format(job))
 
     if username is None:
         username = job.owner.username

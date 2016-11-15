@@ -79,6 +79,7 @@ class Job(TimeStampedModel):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         models.PROTECT,
+        related_name='jobs',
         verbose_name=_('Job Owner'),
         help_text=_('The user that owns this job'),
     )
@@ -86,6 +87,7 @@ class Job(TimeStampedModel):
     server = models.ForeignKey(
         'Server',
         models.PROTECT,
+        related_name='jobs',
         verbose_name=_('Job Server'),
         help_text=_('The server that this job will run on'),
     )
@@ -113,6 +115,7 @@ class Log(models.Model):
     job = models.ForeignKey(
         'Job',
         models.CASCADE,
+        related_name='logs',
         verbose_name=_('Log Job'),
         help_text=_('The job this log came from'),
     )
