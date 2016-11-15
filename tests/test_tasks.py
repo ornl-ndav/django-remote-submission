@@ -15,10 +15,16 @@ import itertools
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
+from django.db.models.signals import pre_save
 import environ
 
 from django_remote_submission.models import Server, Job, Log
 from django_remote_submission.tasks import submit_job_to_server
+
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
 
 
 def pairwise(iterable):
@@ -72,7 +78,10 @@ class SubmitJobTaskTest(TestCase):
             server=server,
         )
 
-        submit_job_to_server(job, server, self.remote_password)
+        model_saved = Mock()
+        pre_save.connect(model_saved, sender=Job)
+
+        submit_job_to_server(job.pk, server, self.remote_password)
 
         self.assertEqual(Log.objects.count(), 5)
 
@@ -82,3 +91,40 @@ class SubmitJobTaskTest(TestCase):
         for log1, log2 in pairwise(Log.objects.all()):
             delta = log2.time - log1.time
             self.assertTrue(min_delta <= delta <= max_delta)
+
+        self.assertEqual(model_saved.call_count, 2)
+        pre_save.disconnect(model_saved, sender=Job)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
+
+
+    def test_program_failed(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+
+        program = '''
+        import sys
+        sys.exit(1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+        )
+
+        submit_job_to_server(job.pk, server, self.remote_password)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.failure)

@@ -7,7 +7,7 @@ import socket
 import six
 from paramiko.client import SSHClient, AutoAddPolicy
 
-from .models import Log
+from .models import Log, Job
 
 try:
     from celery import shared_task
@@ -17,7 +17,9 @@ except ImportError:
 
 
 @shared_task
-def submit_job_to_server(job, server, password, username=None, client=None):
+def submit_job_to_server(job_pk, server, password, username=None, client=None):
+    job = Job.objects.get(pk=job_pk)
+
     if username is None:
         username = job.owner.username
 
@@ -35,10 +37,15 @@ def submit_job_to_server(job, server, password, username=None, client=None):
     path = os.path.join(job.remote_directory, job.remote_filename)
     sftp.putfo(io.StringIO(six.u(job.program)), path)
 
+    job.status = Job.STATUS.submitted
+    job.save()
+
     stdin, stdout, stderr = client.exec_command(
         command='python -u {}'.format(path),
         bufsize=1,
     )
+
+    channel = stdin.channel
 
     for line in stdout:
         Log.objects.create(
@@ -48,3 +55,10 @@ def submit_job_to_server(job, server, password, username=None, client=None):
 
     stdout.close()
     stderr.close()
+
+    if channel.recv_exit_status() == 0:
+        job.status = Job.STATUS.success
+    else:
+        job.status = Job.STATUS.failure
+
+    job.save()
