@@ -53,7 +53,6 @@ class Job(TimeStampedModel):
 
     STATUS = Choices(
         ('initial', _('initial')),
-        ('edited', _('edited')),
         ('submitted', _('submitted')),
         ('success', _('success')),
         ('failure', _('failure')),

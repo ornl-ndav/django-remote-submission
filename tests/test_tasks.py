@@ -19,7 +19,7 @@ from django.db.models.signals import pre_save
 import environ
 
 from django_remote_submission.models import Server, Job, Log
-from django_remote_submission.tasks import submit_job_to_server
+from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
 try:
     from unittest.mock import Mock
@@ -128,3 +128,75 @@ class SubmitJobTaskTest(TestCase):
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.failure)
+
+
+    def test_program_log_total(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+
+        program = '''
+        import time
+        for i in range(5):
+            print(i)
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+        )
+
+        submit_job_to_server(job.pk, self.remote_password,
+                             log_policy=LogPolicy.LOG_TOTAL)
+
+        self.assertEqual(Log.objects.count(), 1)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
+
+
+    def test_program_log_none(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+
+        program = '''
+        import time
+        for i in range(5):
+            print(i)
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+        )
+
+        submit_job_to_server(job.pk, self.remote_password,
+                             log_policy=LogPolicy.LOG_NONE)
+
+        self.assertEqual(Log.objects.count(), 0)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)

@@ -27,8 +27,15 @@ except ImportError:
         return func
 
 
+class LogPolicy:
+    LOG_NONE = 0
+    LOG_LIVE = 1
+    LOG_TOTAL = 2
+
+
 @shared_task
-def submit_job_to_server(job_pk, password, username=None, client=None):
+def submit_job_to_server(job_pk, password, username=None, client=None,
+                         log_policy=LogPolicy.LOG_LIVE):
     job = Job.objects.get(pk=job_pk)
 
     if username is None:
@@ -58,9 +65,27 @@ def submit_job_to_server(job_pk, password, username=None, client=None):
 
     channel = stdin.channel
 
+    all_lines = []
     for line in stdout:
+        if log_policy == LogPolicy.LOG_LIVE:
+            Log.objects.create(
+                content=line.strip('\n'),
+                job=job,
+            )
+
+        elif log_policy == LogPolicy.LOG_TOTAL:
+            all_lines.append(line.strip('\n'))
+
+        elif log_policy == LogPolicy.LOG_NONE:
+            pass
+
+        else:
+            msg = 'Unexpected value for log_policy: {!r}'.format(log_policy)
+            raise ValueError(msg)
+
+    if log_policy == LogPolicy.LOG_TOTAL:
         Log.objects.create(
-            content=line.strip('\n'),
+            content='\n'.join(all_lines),
             job=job,
         )
 
