@@ -52,14 +52,17 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
         )
 
     sftp = client.open_sftp()
-    path = os.path.join(job.remote_directory, job.remote_filename)
-    sftp.putfo(six.StringIO(job.program), path)
+    sftp.chdir(job.remote_directory)
+    sftp.putfo(six.StringIO(job.program), job.remote_filename)
 
     job.status = Job.STATUS.submitted
     job.save()
 
     stdin, stdout, stderr = client.exec_command(
-        command='python -u {}'.format(path),
+        command='cd {} && python -u {}'.format(
+            job.remote_directory,
+            job.remote_filename,
+        ),
         bufsize=1,
     )
 
@@ -98,3 +101,20 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
         job.status = Job.STATUS.failure
 
     job.save()
+
+    file_attrs = sftp.listdir_attr()
+    file_map = { attr.filename: attr for attr in file_attrs }
+    script_attr = file_map[job.remote_filename]
+    script_mtime = script_attr.st_mtime
+
+    modified = []
+    for attr in file_attrs:
+        if attr is script_attr:
+            continue
+
+        if attr.st_mtime < script_mtime:
+            continue
+
+        modified.append(attr.filename)
+
+    return modified

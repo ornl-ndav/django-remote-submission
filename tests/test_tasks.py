@@ -200,3 +200,41 @@ class SubmitJobTaskTest(TestCase):
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.success)
+
+
+    def test_program_modified_files(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+
+        program = '''
+        import time
+        for i in range(5):
+            with open('{}.txt'.format(i), 'w') as f:
+                f.write('foo')
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+        )
+
+        modified = submit_job_to_server(job.pk, self.remote_password)
+
+        self.assertEqual(len(modified), 5)
+        expected = ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
+        self.assertEqual(modified, expected)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
