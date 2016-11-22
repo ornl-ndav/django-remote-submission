@@ -49,3 +49,7 @@ docs/_build
 /TAGS
 *~
 /.env
+.*.secondary
+db.sqlite3
+db.sqlite3
+venv

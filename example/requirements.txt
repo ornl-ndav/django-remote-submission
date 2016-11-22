@@ -1,0 +1,4 @@
+-e..
+celery[redis]
+django
+django-celery-results

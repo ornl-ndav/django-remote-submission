@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ job }}</h1>
+
+<div class="row">
+  <div class="col-xs-6 col-xs-offset-3">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h3>Logs</h3></div>
+      <table class="table table-striped">
+        <thead>
+          <th>Time</th>
+          <th>Job</th>
+          <th>Content</th>
+          <th>Detail</th>
+        </thead>
+        <tbody>
+          {% for log in job.logs.all %}
+          <tr>
+            <td>{{ log.time }}</td>
+            <td>{{ log.job.title }}</td>
+            <td>{{ log.content }}</td>
+            <td>
+              <a class="btn btn-default"
+                 href="{% url 'server-detail' log.job.server.pk %}">
+                View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div> <!-- /.row -->
+
+{% endblock %}

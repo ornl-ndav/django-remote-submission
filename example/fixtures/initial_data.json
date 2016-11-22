@@ -1,0 +1,44 @@
+[
+  {
+    "model": "auth.User",
+    "pk": 1,
+    "fields": {
+      "username": "failsafe",
+      "password": "pbkdf2_sha256$30000$rb7oLJNNzGn7$Vtwt6d4UtJOKNTBkUYG7Q6kP93r+DnkquQFYk2P1/Eg="
+    }
+  },
+
+  {
+    "model": "django_remote_submission.Server",
+    "pk": 1,
+    "fields": {
+      "title": "Test Server",
+      "hostname": "192.168.56.101",
+      "port": 22
+    }
+  },
+
+  {
+    "model": "django_remote_submission.Server",
+    "pk": 2,
+    "fields": {
+      "title": "Analysis",
+      "hostname": "analysis.sns.gov",
+      "port": 22
+    }
+  },
+
+  {
+    "model": "django_remote_submission.Job",
+    "pk": 1,
+    "fields": {
+      "title": "Test Job",
+      "program": "import time\nfor i in range(10):\n  print(i)\n  time.sleep(1)\n",
+      "status": "initial",
+      "remote_directory": "/tmp/",
+      "remote_filename": "test_job.py",
+      "owner": 1,
+      "server": 1
+    }
+  }
+]

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<ul>
+  {% for server in server_list %}
+  <li>
+    {{ server }}
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ server }}</h1>
+
+<div class="row">
+  <div class="col-xs-6 col-xs-offset-3">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h3>Jobs</h3></div>
+      <table class="table table-striped">
+        <thead>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>Server</th>
+          <th>Detail</th>
+        </thead>
+        <tbody>
+          {% for job in server.jobs.all %}
+          <tr>
+            <td>{{ job.title }}</td>
+            <td>{{ job.status }}</td>
+            <td>{{ job.owner.username }}</td>
+            <td>{{ job.server.title }}</td>
+            <td>
+              <a class="btn btn-default"
+                 href="{% url 'job-detail' job.pk %}">
+                View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div> <!-- /.row -->
+
+{% endblock %}

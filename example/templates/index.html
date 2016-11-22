@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-xs-6 col-xs-offset-3">
+      <div class="panel panel-default">
+        <div class="panel-heading"><h3>Servers</h3></div>
+        <table class="table table-striped">
+          <thead>
+            <th>Title</th>
+            <th>Host Name</th>
+            <th>Port</th>
+            <th>Detail</th>
+          </thead>
+          <tbody>
+            {% for server in server_list %}
+            <tr>
+              <td>{{ server.title }}</td>
+              <td>{{ server.hostname }}</td>
+              <td>{{ server.port }}</td>
+              <td>
+                <a class="btn btn-default"
+                   href="{% url 'server-detail' server.pk %}">
+                  View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div> <!-- /.row -->
+
+  <div class="row">
+    <div class="col-xs-6 col-xs-offset-3">
+      <div class="panel panel-default">
+        <div class="panel-heading"><h3>Jobs</h3></div>
+        <table class="table table-striped">
+          <thead>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Owner</th>
+            <th>Server</th>
+            <th>Detail</th>
+          </thead>
+          <tbody>
+            {% for job in job_list %}
+            <tr>
+              <td>{{ job.title }}</td>
+              <td>{{ job.status }}</td>
+              <td>{{ job.owner.username }}</td>
+              <td>{{ job.server.title }}</td>
+              <td>
+                <a class="btn btn-default"
+                   href="{% url 'job-detail' job.pk %}">
+                  View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div> <!-- /.row -->
+
+  <div class="row">
+    <div class="col-xs-6 col-xs-offset-3">
+      <div class="panel panel-default">
+        <div class="panel-heading"><h3>Logs</h3></div>
+        <table class="table table-striped">
+          <thead>
+            <th>Time</th>
+            <th>Job</th>
+            <th>Content</th>
+            <th>Detail</th>
+          </thead>
+          <tbody>
+            {% for log in log_list %}
+            <tr>
+              <td>{{ log.time }}</td>
+              <td>{{ log.job.title }}</td>
+              <td>{{ log.content }}</td>
+              <td>
+                <a class="btn btn-default"
+                   href="{% url 'server-detail' log.job.server.pk %}">
+                  View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div> <!-- /.row -->
+
+</div>
+
+{% endblock %}
