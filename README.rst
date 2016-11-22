@@ -5,8 +5,8 @@ Django Remote Submission
 .. image:: https://badge.fury.io/py/django-remote-submission.png
     :target: https://badge.fury.io/py/django-remote-submission
 
-.. image:: https://travis-ci.org/player1537/django-remote-submission.png?branch=master
-    :target: https://travis-ci.org/player1537/django-remote-submission
+.. image:: https://travis-ci.org/ornl-ndav/django-remote-submission.png?branch=master
+    :target: https://travis-ci.org/ornl-ndav/django-remote-submission
 
 A Django application to manage long running job submission, including starting the job, saving logs, and storing results.
 
@@ -24,12 +24,37 @@ Install Django Remote Submission::
 
 Then use it in a project::
 
-    import django_remote_submission
+    from django_remote_submission.models import Server, Job
+    from django_remote_submission.tasks import submit_job_to_server
+
+    server = Server.objects.get_or_create(
+        title='My Server Title',
+        hostname='example.com',
+        port=22,
+    )[0]
+
+    job = Job.objects.get_or_create(
+        title='My Job Title',
+        program='print("hello world")',
+        remote_directory='/tmp/',
+        remote_filename='test.py',
+        owner=request.user,
+        server=server,
+    )[0]
+
+    modified_files = submit_job_to_server(
+        job_pk=job.pk,
+        password=request.POST.get('password'),
+    )
 
 Features
 --------
 
-* TODO
+* Able to connect to any server via password-authenticated SSH.
+
+* Able to receive logs and write them to a database in realtime.
+
+* Able to return any modified files from the remote server.
 
 Running Tests
 --------------
@@ -40,7 +65,15 @@ Does the code actually work?
 
     source <YOURVIRTUALENV>/bin/activate
     (myenv) $ pip install -r requirements_test.txt
-    (myenv) $ python runtests.py
+    (myenv) $ make test
+
+Some of the tests use a test server to check the functional aspects of the
+library. Specifically, it will try to connect to the server multiple times, run
+some programs, and check that their output is correct.
+
+To run those tests as well, copy the ``.env.base`` file to ``.env`` and modify
+the variables as needed. If this file has not been set up, then those tests
+will be skipped, but it won't affect the success or failure of the tests.
 
 Credits
 ---------
