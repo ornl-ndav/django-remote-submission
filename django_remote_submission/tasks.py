@@ -35,7 +35,7 @@ class LogPolicy:
 
 @shared_task
 def submit_job_to_server(job_pk, password, username=None, client=None,
-                         log_policy=LogPolicy.LOG_LIVE):
+                         log_policy=LogPolicy.LOG_LIVE, timeout=None):
     job = Job.objects.get(pk=job_pk)
 
     if username is None:
@@ -58,10 +58,14 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     job.status = Job.STATUS.submitted
     job.save()
 
+    command = 'python -u {}'.format(job.remote_filename)
+    if timeout is not None:
+        command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
+
     stdin, stdout, stderr = client.exec_command(
-        command='cd {} && python -u {}'.format(
+        command='cd {} && {}'.format(
             job.remote_directory,
-            job.remote_filename,
+            command,
         ),
         bufsize=1,
     )
