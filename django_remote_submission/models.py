@@ -125,3 +125,39 @@ class Log(models.Model):
 
     def __str__(self):
         return '{self.time} {self.job}'.format(self=self)
+
+
+def job_result_path(result, filename):
+    return 'job_{}/{}'.format(instance.user.id, filename)
+
+
+@python_2_unicode_compatible
+class Result(TimeStampedModel):
+    remote_filename = models.TextField(
+        _('Remote Filename'),
+        help_text=_('The filename on the remote server for this result, '
+                    'relative to the remote directory of the job'),
+        max_length=250,
+    )
+
+    local_filename = models.FileField(
+        _('Local Filename'),
+        help_text=_('The filename on the local server for this result'),
+        upload_to=job_result_path,
+        max_length=250,
+    )
+
+    job = models.ForeignKey(
+        'Job',
+        models.CASCADE,
+        related_name='results',
+        verbose_name=_('Result Job'),
+        help_text=_('The job this result came from'),
+    )
+
+    class Meta:
+        verbose_name = _('result')
+        verbose_name_plural = _('results')
+
+    def __str__(self):
+        return '{self.remote_filename} <{self.job}>'.format(self=self)

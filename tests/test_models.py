@@ -11,7 +11,7 @@ Tests for `django-remote-submission` models module.
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from django_remote_submission.models import Server, Job, Log
+from django_remote_submission.models import Server, Job, Log, Result
 
 
 class ServerModelTest(TestCase):
@@ -73,3 +73,29 @@ class LogModelTest(TestCase):
     def test_string_representation(self):
         self.assertIn(str(self.log.time), str(self.log))
         self.assertIn(str(self.job), str(self.log))
+
+
+class ResultModelTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.get_or_create(username='foo')[0]
+
+        self.server = Server.objects.create(
+            title='1-server-title',
+            hostname='1-server-hostname.invalid',
+        )
+
+        self.job = Job.objects.create(
+            title='1-job-title',
+            program='1-job-program',
+            owner=self.user,
+            server=self.server,
+        )
+
+        self.result = Result.objects.create(
+            remote_filename='foobar.csv',
+            job=self.job,
+        )
+
+    def test_string_representation(self):
+        self.assertIn(str(self.result.remote_filename), str(self.result))
+        self.assertIn(str(self.job), str(self.result))
