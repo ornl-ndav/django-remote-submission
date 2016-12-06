@@ -163,6 +163,7 @@ class LogViewTest(APITestCase):
                     'id': log.id,
                     'time': log.time.isoformat()[:-6] + 'Z',
                     'content': log.content,
+                    'stream': 'stdout',
                     'job': job.id,
                 },
             ],

@@ -101,6 +101,7 @@ class Job(TimeStampedModel):
 
 @python_2_unicode_compatible
 class Log(models.Model):
+
     time = AutoCreatedField(
         _('Log Time'),
         help_text=_('The time this log was created'),
@@ -109,6 +110,18 @@ class Log(models.Model):
     content = models.TextField(
         _('Log Content'),
         help_text=_('The content of this log message'),
+    )
+
+    STD_STREAM_CHOICES = (
+        ('stdout', _('stdout')),
+        ('stderr', _('stderr')),
+    )
+    stream = models.CharField(
+        _('Standard Stream'),
+        max_length=6,
+        choices=STD_STREAM_CHOICES,
+        help_text=_('Output communication channels. Either stdout or stderr.'),
+        default='stdout',
     )
 
     job = models.ForeignKey(
