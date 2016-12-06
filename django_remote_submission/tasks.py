@@ -1,4 +1,6 @@
 from __future__ import absolute_import, unicode_literals, print_function
+from six import with_metaclass
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -61,7 +63,7 @@ class CommandMeta(type):
         val = cls.defaults.get(key,key)
         return val
 
-class Command(object, metaclass = CommandMeta):
+class Command(with_metaclass(CommandMeta)):
     '''
     In the code just call
         In [10]: Command['python']
