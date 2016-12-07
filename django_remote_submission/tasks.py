@@ -12,6 +12,7 @@ import socket
 
 import six
 from paramiko.client import SSHClient, AutoAddPolicy
+from threading import Thread
 
 from .models import Log, Job
 
@@ -79,6 +80,38 @@ class Command(with_metaclass(CommandMeta)):
             command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
         return command
 
+def store_logs(stream, stream_type, log_policy, job):
+    '''
+    Store logs in the DB
+    @param stream_type :: One of ('stdout','stderr')
+    '''
+    
+    all_lines = []
+    for line in stream:
+        if log_policy == LogPolicy.LOG_LIVE:
+            Log.objects.create(
+                content=line.strip('\n'),
+                stream=stream_type,
+                job=job,
+            )
+
+        elif log_policy == LogPolicy.LOG_TOTAL:
+            all_lines.append(line.strip('\n'))
+
+        elif log_policy == LogPolicy.LOG_NONE:
+            pass
+
+        else:
+            msg = 'Unexpected value for log_policy: {!r}'.format(log_policy)
+            raise ValueError(msg)
+
+    if log_policy == LogPolicy.LOG_TOTAL:
+        Log.objects.create(
+            content='\n'.join(all_lines),
+            stream=stream_type,
+            job=job,
+        )
+
 @shared_task
 def submit_job_to_server(job_pk, password, username=None, client=None,
                          log_policy=LogPolicy.LOG_LIVE, timeout=None,
@@ -118,29 +151,17 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
 
     channel = stdin.channel
 
-    all_lines = []
-    for line in stdout:
-        if log_policy == LogPolicy.LOG_LIVE:
-            Log.objects.create(
-                content=line.strip('\n'),
-                job=job,
-            )
-
-        elif log_policy == LogPolicy.LOG_TOTAL:
-            all_lines.append(line.strip('\n'))
-
-        elif log_policy == LogPolicy.LOG_NONE:
-            pass
-
-        else:
-            msg = 'Unexpected value for log_policy: {!r}'.format(log_policy)
-            raise ValueError(msg)
-
-    if log_policy == LogPolicy.LOG_TOTAL:
-        Log.objects.create(
-            content='\n'.join(all_lines),
-            job=job,
-        )
+    # In parallel creates logs for both stdout and stderr
+    params = [(stdout,'stdout', log_policy, job),
+              (stderr,'stderr',log_policy, job)
+             ]
+    threads = []
+    for param in params:
+        thread = Thread(target=store_logs, args=param)
+        thread.start()
+        threads.append(thread)
+    for thread in threads:
+        thread.join()
 
     stdout.close()
     stderr.close()

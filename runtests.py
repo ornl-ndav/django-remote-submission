@@ -10,6 +10,9 @@ try:
         DATABASES={
             "default": {
                 "ENGINE": "django.db.backends.sqlite3",
+                "OPTIONS": { # for concurrent writes
+                    "timeout": 30000, # ms
+                }
             }
         },
         ROOT_URLCONF="django_remote_submission.urls",
@@ -21,6 +24,27 @@ try:
         ],
         SITE_ID=1,
         MIDDLEWARE_CLASSES=(),
+        LOGGING = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                },
+            },
+            'loggers': {
+                'django': {
+                    'handlers': ['console'],
+                    'level': 'INFO',
+                    'propagate': True,
+                },
+                '': {
+                    'handlers': ['console'],
+                    'level': 'DEBUG',
+                    'propagate': True,
+                },
+            },
+        }
     )
 
     try:
