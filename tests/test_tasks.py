@@ -7,7 +7,7 @@ test_django-remote-submission
 
 Tests for `django-remote-submission` tasks module.
 """
-
+import sys
 import textwrap
 import datetime
 import itertools
@@ -274,3 +274,41 @@ class SubmitJobTaskTest(TestCase):
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.failure)
+
+    def test_program_log_streams(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+
+        program = '''
+        import time
+        for i in range(5):
+            print(i, file=sys.stderr)
+            print(i, file=sys.stdout)
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+        )
+
+        submit_job_to_server(job.pk, self.remote_password,
+                             log_policy=LogPolicy.LOG_TOTAL)
+
+        self.assertEqual(Log.objects.count(), 2)
+        self.assertEqual(Log.objects.filter(stream='stdout').count(), 1)
+        self.assertEqual(Log.objects.filter(stream='stderr').count(), 1)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
