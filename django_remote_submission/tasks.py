@@ -1,5 +1,4 @@
 from __future__ import absolute_import, unicode_literals, print_function
-from six import with_metaclass
 
 import logging
 
@@ -14,7 +13,7 @@ import six
 from paramiko.client import SSHClient, AutoAddPolicy
 from threading import Thread
 
-from .models import Log, Job
+from .models import Log, Job, Interpreter
 
 try:
     from celery import shared_task
@@ -34,51 +33,6 @@ class LogPolicy(object):
     LOG_NONE = 0
     LOG_LIVE = 1
     LOG_TOTAL = 2
-
-
-class CommandMeta(type):
-    '''
-    Commands available in analysis.sns.gov
-    (except for python3!)
-    '''
-    defaults = {
-        'python' : '/usr/bin/python -u',
-        'python2' : '/usr/bin/python2 -u',
-        'python2.7' : '/usr/bin/python2.7 -u',
-        'python3' : '/usr/bin/python3 -u',
-        'python3.4' : '/usr/bin/python3.4 -u',
-        'python3.5' : '/usr/bin/python3.5 -u',
-        'bash' : '/usr/bin/bash',
-        'sh' : '/bin/sh',
-        'mantidpython' : '/usr/bin/mantidpython38 -u',
-        'mantidpython35' : '/usr/bin/mantidpython35 -u',
-        'mantidpython36' : '/usr/bin/mantidpython36 -u',
-        'mantidpython37' : '/usr/bin/mantidpython37 -u',
-        'mantidpython38' : '/usr/bin/mantidpython38 -u',
-        'mantidpythonnightly' : '/usr/bin/mantidpythonnightly -u',
-    }
-    def __getitem__(cls,key):
-        '''
-        The default of get item is the key if val not found
-        '''
-        val = cls.defaults.get(key,key)
-        return val
-
-class Command(with_metaclass(CommandMeta)):
-    '''
-    In the code just call
-        In [10]: Command['python']
-        Out[10]: '/usr/bin/python -u'
-    or:
-        In [4]: Command.build_command('python',60)
-        Out[4]: 'timeout 60s /usr/bin/python -u XX'
-    '''
-    @staticmethod
-    def build_command(interpreter, timeout, job):
-        command = '{} {}'.format(Command[interpreter],job.remote_filename)
-        if timeout is not None:
-            command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
-        return command
 
 def store_logs(stream, stream_type, log_policy, job):
     '''
@@ -114,8 +68,7 @@ def store_logs(stream, stream_type, log_policy, job):
 
 @shared_task
 def submit_job_to_server(job_pk, password, username=None, client=None,
-                         log_policy=LogPolicy.LOG_LIVE, timeout=None,
-                         interpreter = 'python'):
+                         log_policy=LogPolicy.LOG_LIVE, timeout=None):
     job = Job.objects.get(pk=job_pk)
 
     if username is None:
@@ -138,8 +91,12 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     job.status = Job.STATUS.submitted
     job.save()
 
-    command = Command.build_command(interpreter,timeout, job)
-    logger.debug("Executing remotely teh command: %s.", command)
+    command = '{} {}'.format(job.interpreter.path,job.remote_filename)
+    if timeout is not None:
+        command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
+    return command
+
+    logger.debug("Executing remotely the command: %s.", command)
 
     stdin, stdout, stderr = client.exec_command(
         command='cd {} && {}'.format(
@@ -153,7 +110,7 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
 
     # In parallel creates logs for both stdout and stderr
     params = [(stdout,'stdout', log_policy, job),
-              (stderr,'stderr',log_policy, job)
+              (stderr,'stderr', log_policy, job)
              ]
     threads = []
     for param in params:

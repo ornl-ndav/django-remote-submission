@@ -5,13 +5,16 @@ from django.utils.translation import ungettext_lazy as _
 from django.shortcuts import render
 from django.http.response import HttpResponseRedirect
 
-from .models import Server, Job, Log
+from .models import Server, Job, Log, Interpreter
 from .tasks import submit_job_to_server
 
+@admin.register(Interpreter)
+class InterpreterAdmin(admin.ModelAdmin):
+    pass
 
 @admin.register(Server)
 class ServerAdmin(admin.ModelAdmin):
-    pass
+    filter_horizontal = ('interpreters',)
 
 
 @admin.register(Job)

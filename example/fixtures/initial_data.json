@@ -1,44 +1,190 @@
 [
   {
-    "model": "auth.User",
+    "model": "django_remote_submission.interpreter",
     "pk": 1,
     "fields": {
-      "username": "failsafe",
-      "password": "pbkdf2_sha256$30000$rb7oLJNNzGn7$Vtwt6d4UtJOKNTBkUYG7Q6kP93r+DnkquQFYk2P1/Eg="
+      "created": "2016-12-08T14:53:23.251Z",
+      "modified": "2016-12-08T14:53:23.252Z",
+      "name": "python",
+      "path": "/usr/bin/python -u"
     }
   },
-
   {
-    "model": "django_remote_submission.Server",
-    "pk": 1,
-    "fields": {
-      "title": "Test Server",
-      "hostname": "192.168.56.101",
-      "port": 22
-    }
-  },
-
-  {
-    "model": "django_remote_submission.Server",
+    "model": "django_remote_submission.interpreter",
     "pk": 2,
     "fields": {
-      "title": "Analysis",
-      "hostname": "analysis.sns.gov",
-      "port": 22
+      "created": "2016-12-08T14:53:40.343Z",
+      "modified": "2016-12-08T14:53:40.344Z",
+      "name": "python2",
+      "path": "/usr/bin/python2 -u"
     }
   },
-
   {
-    "model": "django_remote_submission.Job",
+    "model": "django_remote_submission.interpreter",
+    "pk": 3,
+    "fields": {
+      "created": "2016-12-08T14:53:57.640Z",
+      "modified": "2016-12-08T14:53:57.641Z",
+      "name": "python2.7",
+      "path": "/usr/bin/python2.7 -u"
+    }
+  },
+  {
+    "model": "django_remote_submission.interpreter",
+    "pk": 4,
+    "fields": {
+      "created": "2016-12-08T14:54:12.033Z",
+      "modified": "2016-12-08T14:54:12.034Z",
+      "name": "bash",
+      "path": "/usr/bin/bash"
+    }
+  },
+  {
+    "model": "django_remote_submission.interpreter",
+    "pk": 5,
+    "fields": {
+      "created": "2016-12-08T14:54:27.149Z",
+      "modified": "2016-12-08T14:54:27.150Z",
+      "name": "mantidpython",
+      "path": "/usr/bin/mantidpython38 -u"
+    }
+  },
+  {
+    "model": "django_remote_submission.interpreter",
+    "pk": 6,
+    "fields": {
+      "created": "2016-12-08T14:54:42.718Z",
+      "modified": "2016-12-08T14:54:42.719Z",
+      "name": "mantidpython35",
+      "path": "/usr/bin/mantidpython35 -u"
+    }
+  },
+  {
+    "model": "django_remote_submission.interpreter",
+    "pk": 7,
+    "fields": {
+      "created": "2016-12-08T14:55:07.879Z",
+      "modified": "2016-12-08T14:55:07.880Z",
+      "name": "mantidpython36",
+      "path": "/usr/bin/mantidpython36 -u"
+    }
+  },
+  {
+    "model": "django_remote_submission.interpreter",
+    "pk": 8,
+    "fields": {
+      "created": "2016-12-08T14:55:25.634Z",
+      "modified": "2016-12-08T14:55:25.635Z",
+      "name": "mantidpython37",
+      "path": "/usr/bin/mantidpython37 -u"
+    }
+  },
+  {
+    "model": "django_remote_submission.interpreter",
+    "pk": 9,
+    "fields": {
+      "created": "2016-12-08T14:55:42.837Z",
+      "modified": "2016-12-08T14:55:42.838Z",
+      "name": "mantidpython38",
+      "path": "/usr/bin/mantidpython38 -u"
+    }
+  },
+  {
+    "model": "django_remote_submission.interpreter",
+    "pk": 10,
+    "fields": {
+      "created": "2016-12-08T15:01:18.062Z",
+      "modified": "2016-12-08T15:01:18.064Z",
+      "name": "python3",
+      "path": "/usr/bin/python3 -u"
+    }
+  },
+  {
+    "model": "django_remote_submission.server",
     "pk": 1,
     "fields": {
+      "created": "2016-12-08T14:45:21.218Z",
+      "modified": "2016-12-08T15:03:30.819Z",
+      "title": "Test Server",
+      "hostname": "192.168.56.101",
+      "port": 22,
+      "interpreters": [
+        10
+      ]
+    }
+  },
+  {
+    "model": "django_remote_submission.server",
+    "pk": 2,
+    "fields": {
+      "created": "2016-12-08T14:45:21.219Z",
+      "modified": "2016-12-08T15:00:39.395Z",
+      "title": "Analysis",
+      "hostname": "analysis.sns.gov",
+      "port": 22,
+      "interpreters": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$30000$rb7oLJNNzGn7$Vtwt6d4UtJOKNTBkUYG7Q6kP93r+DnkquQFYk2P1/Eg=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "failsafe",
+      "first_name": "",
+      "last_name": "",
+      "email": "",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2016-12-08T14:45:21.215Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$30000$4CUb80KAUwuF$l7mgAJfYbk8dj72EPeCTZjgHG/ybVXfJ2ooCXmAVWTQ=",
+      "last_login": "2016-12-08T14:47:10.117Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "",
+      "last_name": "",
+      "email": "",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2016-12-08T14:46:41.513Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "django_remote_submission.job",
+    "pk": 1,
+    "fields": {
+      "created": "2016-12-08T14:45:21.220Z",
+      "modified": "2016-12-08T14:45:21.220Z",
       "title": "Test Job",
       "program": "import time\nfor i in range(10):\n  print(i)\n  time.sleep(1)\n",
       "status": "initial",
       "remote_directory": "/tmp/",
       "remote_filename": "test_job.py",
       "owner": 1,
-      "server": 1
+      "server": 1,
+      "interpreter": 1
     }
   }
 ]

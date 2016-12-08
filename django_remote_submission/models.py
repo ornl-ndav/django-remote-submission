@@ -4,11 +4,32 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.utils.encoding import python_2_unicode_compatible
+from django.core.exceptions import ValidationError
 
 from model_utils import Choices
 from model_utils.fields import StatusField, AutoCreatedField
 from model_utils.models import TimeStampedModel
 
+@python_2_unicode_compatible
+class Interpreter(TimeStampedModel):
+    name = models.CharField(
+        _('Interpreter Name'),
+        help_text=_('The human-readable name of the interpreter'),
+        max_length=100,
+    )
+
+    path = models.CharField(
+        _('Command Full Path'),
+        help_text=_('The full path of the interpreter path and additional parameters.'),
+        max_length=256,
+    )
+
+    class Meta:
+        verbose_name = _('interpreter')
+        verbose_name_plural = _('interpreters')
+
+    def __str__(self):
+        return '{self.name} ({self.path})'.format(self=self)
 
 @python_2_unicode_compatible
 class Server(TimeStampedModel):
@@ -28,6 +49,11 @@ class Server(TimeStampedModel):
         _('Server Port'),
         help_text=_('The port to connect to for SSH (usually 22)'),
         default=22,
+    )
+
+    interpreters = models.ManyToManyField(
+        Interpreter,
+        verbose_name=_("List of interpreters available for this Server")
     )
 
     class Meta:
@@ -91,12 +117,34 @@ class Job(TimeStampedModel):
         help_text=_('The server that this job will run on'),
     )
 
+    interpreter = models.ForeignKey(
+        Interpreter,
+        models.PROTECT,
+        related_name='jobs',
+        verbose_name=_('Job Interpreter'),
+        help_text=_('The interpreter that this job will run on'),
+    )
+
     class Meta:
         verbose_name = _('job')
         verbose_name_plural = _('jobs')
 
     def __str__(self):
         return '{self.title}'.format(self=self)
+    
+    def clean(self):
+        '''
+        Makes sure the interpreter exists for this Server
+        This only works for the form job creation!
+        TODO: Put this in the pre_save signal
+        '''
+        available_interpreters = self.server.interpreters.all()
+        if self.interpreter not in available_interpreters:
+            raise ValidationError(_('The Interpreter picked is not valid for this server. '))
+            #'Please, choose one from: {0!s}.').format(available_interpreters))
+        else:
+            cleaned_data = super(Job, self).clean()
+            return cleaned_data
 
 
 @python_2_unicode_compatible

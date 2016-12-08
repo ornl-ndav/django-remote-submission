@@ -18,7 +18,7 @@ from django.test import TestCase
 from django.db.models.signals import pre_save
 import environ
 
-from django_remote_submission.models import Server, Job, Log
+from django_remote_submission.models import Server, Job, Log, Interpreter
 from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
 try:
@@ -47,6 +47,8 @@ class SubmitJobTaskTest(TestCase):
             self.remote_filename = env('TEST_REMOTE_FILENAME')
             self.remote_user = env('TEST_REMOTE_USER')
             self.remote_password = env('TEST_REMOTE_PASSWORD')
+            self.interpreter_name = env('TEST_INTERPRETER_NAME')
+            self.interpreter_path = env('TEST_INTERPRETER_PATH')
         except ImproperlyConfigured:
             self.skipTest('Environment variables not set')
             return
@@ -56,11 +58,17 @@ class SubmitJobTaskTest(TestCase):
             username=self.remote_user,
         )[0]
 
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+
         server = Server.objects.create(
             title='1-server-title',
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        server.interpreters.set([interpreter])
 
         program = '''
         import time
@@ -76,6 +84,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         model_saved = Mock()
@@ -110,6 +119,12 @@ class SubmitJobTaskTest(TestCase):
             port=self.server_port,
         )
 
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
+
         program = '''
         import sys
         sys.exit(1)
@@ -122,6 +137,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password)
@@ -140,6 +156,11 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
         import time
@@ -155,6 +176,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password,
@@ -176,6 +198,11 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
         import time
@@ -191,6 +218,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password,
@@ -212,6 +240,11 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
         import time
@@ -228,6 +261,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         modified = submit_job_to_server(job.pk, self.remote_password)
@@ -250,6 +284,11 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
         import time
@@ -265,6 +304,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password,
@@ -285,6 +325,11 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
         import time
@@ -301,6 +346,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password,
