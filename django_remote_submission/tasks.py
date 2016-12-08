@@ -94,18 +94,16 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     command = '{} {}'.format(job.interpreter.path,job.remote_filename)
     if timeout is not None:
         command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
-    return command
-
-    logger.debug("Executing remotely the command: %s.", command)
 
     stdin, stdout, stderr = client.exec_command(
-        command='cd {} && {}'.format(
+        command='mkdir -p {0} && cd {0} && {1}'.format(
             job.remote_directory,
             command,
         ),
         bufsize=1,
     )
-
+    logger.debug("Executed remotely the command: %s.", command)
+    
     channel = stdin.channel
 
     # In parallel creates logs for both stdout and stderr

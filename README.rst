@@ -33,12 +33,18 @@ Then use it in a project::
         port=22,
     )[0]
     
-    interpreter = Interpreter.objects.get_or_create(
-        name = 'python',
-        path = '/usr/bin/python -u',
+    python2_interpreter = Interpreter.objects.get_or_create(
+        name = 'python2',
+        path = '/usr/bin/python2.7 -u',
     )[0]
     
-    server.interpreters.set([interpreter])
+    python3_interpreter = Interpreter.objects.get_or_create(
+        name = 'python3',
+        path = '/usr/bin/python3.5 -u',
+    )[0]
+
+    server.interpreters.set([python2_interpreter,
+                             python3_interpreter])
 
     job = Job.objects.get_or_create(
         title='My Job Title',
@@ -47,7 +53,7 @@ Then use it in a project::
         remote_filename='test.py',
         owner=request.user,
         server=server,
-        interpreter=interpreter,
+        interpreter=python2_interpreter,
     )[0]
 
     modified_files = submit_job_to_server(
