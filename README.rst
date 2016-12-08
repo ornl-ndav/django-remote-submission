@@ -83,6 +83,41 @@ To run those tests as well, copy the ``.env.base`` file to ``.env`` and modify
 the variables as needed. If this file has not been set up, then those tests
 will be skipped, but it won't affect the success or failure of the tests.
 
+Running tests independtely, e.g.::
+
+    python runtests.py tests.test_tasks.SubmitJobTaskTest.test_normal_usage
+    python runtests.py tests.test_tasks.SubmitJobTaskTest
+    python runtests.py tests.test_tasks
+    python runtests.py tests.test_models
+
+=============================
+Running the Example
+=============================
+
+Launch Redis::
+
+    redis-server
+
+Launch Celery::
+
+    cd example
+    celery -A server.celery worker --loglevel=info
+
+Launch Django::
+
+    cd example
+    ./manage.py makemigrations
+    ./manage.py migrate
+    ./manage.py loaddata fixtures/initial_data.json
+    ./manage.py runserver
+
+Open in browser::
+
+    http://localhost:8000/admin/
+    http://localhost:8000/
+
+    
+
 Credits
 ---------
 
