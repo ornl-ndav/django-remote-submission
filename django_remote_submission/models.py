@@ -185,4 +185,4 @@ class Log(models.Model):
         verbose_name_plural = _('logs')
 
     def __str__(self):
-        return '{self.time} {self.job}'.format(self=self)
+        return '{self.time} : {self.job} : {self.stream}'.format(self=self)

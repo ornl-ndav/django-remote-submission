@@ -71,9 +71,13 @@ class SubmitJobTaskTest(TestCase):
         server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
+        import sys
         import time
         for i in range(5):
-            print(i)
+            #print("line: {}".format(i))
+            print("line: {}".format(i), file=sys.stdout)
+            sys.stdout.flush()
             time.sleep(0.1)
         '''
 
@@ -163,9 +167,12 @@ class SubmitJobTaskTest(TestCase):
         server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
         import time
+        import sys
         for i in range(5):
-            print(i)
+            print("Line number: {}.".format(i), file=sys.stdout)
+            sys.stdout.flush()
             time.sleep(0.1)
         '''
 
@@ -205,6 +212,7 @@ class SubmitJobTaskTest(TestCase):
         server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
         import time
         for i in range(5):
             print(i)
@@ -247,6 +255,7 @@ class SubmitJobTaskTest(TestCase):
         server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
         import time
         for i in range(5):
             with open('{}.txt'.format(i), 'w') as f:
@@ -291,10 +300,13 @@ class SubmitJobTaskTest(TestCase):
         server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
+        import sys
         import time
         for i in range(5):
-            print(i)
-            time.sleep(0.35)
+            print(i, file=sys.stdout)
+            sys.stdout.flush()
+            time.sleep(.35)
         '''
 
         job = Job.objects.create(
@@ -332,10 +344,14 @@ class SubmitJobTaskTest(TestCase):
         server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
+        import sys
         import time
         for i in range(5):
-            print(i, file=sys.stderr)
             print(i, file=sys.stdout)
+            sys.stdout.flush()
+            print(i, file=sys.stderr)
+            sys.stderr.flush()
             time.sleep(0.1)
         '''
 
