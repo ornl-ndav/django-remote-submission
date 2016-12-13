@@ -108,27 +108,7 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
         username = job.owner.username
 
     if client is None:
-        client = SSHClient()
-        client.set_missing_host_key_policy(AutoAddPolicy())
-
-        server_hostname = job.server.hostname
-        server_port = job.server.port
-        username = username
-        public_key_filename=os.path.expanduser('~/.ssh/id_rsa.pub')
-
-        try:
-            logger.info("Connecting to %s with public key.", server_hostname)
-            client.connect(server_hostname, port=server_port, username=username,
-                key_filename=public_key_filename)
-        except (AuthenticationException, BadHostKeyException):
-            try:
-                logger.info("Connecting to %s with password.", server_hostname)
-                client.connect(server_hostname, port=server_port, username=username,
-                    password=password)
-                deploy_key_if_it_doesnt_exist(client, public_key_filename)
-            except AuthenticationException:
-                logger.error("Authenctication error! Wrong password...")
-                sys.exit(-1)
+        client = start_client(client, job, username, password=None)
 
     sftp = client.open_sftp()
     sftp.chdir(job.remote_directory)
@@ -195,3 +175,31 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     
     client.close()
     return modified
+
+def start_client(client, job, username, password=None,
+    public_key_filename=os.path.expanduser('~/.ssh/id_rsa.pub')):
+    '''
+    This starts an 
+    '''
+    client = SSHClient()
+    client.set_missing_host_key_policy(AutoAddPolicy())
+
+    server_hostname = job.server.hostname
+    server_port = job.server.port    
+    try:
+        logger.info("Connecting to %s with public key.", server_hostname)
+        client.connect(server_hostname, port=server_port, username=username,
+            key_filename=public_key_filename)
+    except (AuthenticationException, BadHostKeyException):
+        try:
+            if password is None:
+                logger.error("Connection with public key failed! The password is mandatory")
+                return None
+            logger.info("Connecting to %s with password.", server_hostname)
+            client.connect(server_hostname, port=server_port, username=username,
+                password=password)
+            deploy_key_if_it_doesnt_exist(client, public_key_filename)
+        except AuthenticationException:
+            logger.error("Authenctication error! Wrong password...")
+            return None
+    return client

@@ -112,10 +112,10 @@ Launch Celery::
 Launch Django::
 
     cd example
-    ./manage.py makemigrations
-    ./manage.py migrate
-    ./manage.py loaddata fixtures/initial_data.json
-    ./manage.py runserver
+    PYTHONPATH=../ ./manage.py makemigrations
+    PYTHONPATH=../ ./manage.py migrate
+    PYTHONPATH=../ ./manage.py loaddata fixtures/initial_data.json
+    PYTHONPATH=../ ./manage.py runserver
 
 Open in browser::
 
