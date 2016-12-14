@@ -97,11 +97,18 @@ class ResultModelTest(TestCase):
             hostname='1-server-hostname.invalid',
         )
 
+        self.interpreter = Interpreter.objects.create(
+            name = '1-interpreter-name',
+            path = '1-interpreter-path',
+        )
+        self.server.interpreters.set([self.interpreter])
+
         self.job = Job.objects.create(
             title='1-job-title',
             program='1-job-program',
             owner=self.user,
             server=self.server,
+            interpreter=self.interpreter,
         )
 
         self.result = Result.objects.create(

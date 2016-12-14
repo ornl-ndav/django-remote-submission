@@ -4,6 +4,7 @@ try:
     from django.conf import settings
     from django.test.utils import get_runner
 
+
     settings.configure(
         DEBUG=True,
         USE_TZ=True,
@@ -44,12 +45,12 @@ try:
             'loggers': {
                 'django': {
                     'handlers': ['console'],
-                    'level': 'INFO',
+                    'level': 'CRITICAL',
                     'propagate': True,
                 },
                 'django_remote_submission': {
                     'handlers': ['console'],
-                    'level': 'DEBUG',
+                    'level': 'CRITICAL',
                     'propagate': True,
                 },
             },

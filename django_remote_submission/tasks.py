@@ -109,7 +109,7 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
         username = job.owner.username
 
     if client is None:
-        client = start_client(client, job, username, password=None)
+        client = start_client(client, job, username, password)
 
     sftp = client.open_sftp()
     sftp.chdir(job.remote_directory)
@@ -153,12 +153,15 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
                 stream='stdout',
                 job=job,
             )
+            all_lines['stdout'] = []
         if all_lines['stderr']:
             Log.objects.create(
                 content='\n'.join(all_lines['stderr']),
                 stream='stderr',
                 job=job,
             )
+            all_lines['stderr'] = []
+
     file_attrs = sftp.listdir_attr()
     file_map = { attr.filename: attr for attr in file_attrs }
     script_attr = file_map[job.remote_filename]

@@ -98,12 +98,13 @@ class SubmitJobTaskTest(TestCase):
 
         self.assertEqual(Log.objects.count(), 5)
 
-        min_delta = datetime.timedelta(seconds=0.1)
+        min_delta = datetime.timedelta(seconds=0.05)
         max_delta = datetime.timedelta(seconds=0.3)
 
         for log1, log2 in pairwise(Log.objects.all()):
             delta = log2.time - log1.time
-            self.assertTrue(min_delta <= delta <= max_delta)
+            self.assertGreaterEqual(delta, min_delta)
+            self.assertLessEqual(delta, max_delta)
 
         self.assertEqual(model_saved.call_count, 2)
         pre_save.disconnect(model_saved, sender=Job)
@@ -190,6 +191,12 @@ class SubmitJobTaskTest(TestCase):
                              log_policy=LogPolicy.LOG_TOTAL)
 
         self.assertEqual(Log.objects.count(), 1)
+        log = Log.objects.get()
+        self.assertEqual(log.content, (
+            '\n'.join('Line number: {}.'.format(x) for x in range(5))
+        ))
+        self.assertEqual(log.stream, 'stdout')
+
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.success)
@@ -333,11 +340,17 @@ class SubmitJobTaskTest(TestCase):
             username=self.remote_user,
         )[0]
 
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+
         server = Server.objects.create(
             title='1-server-title',
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        server.interpreters.set([interpreter])
 
         program = '''
         import time
@@ -354,6 +367,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         modified = submit_job_to_server(job.pk, self.remote_password)
