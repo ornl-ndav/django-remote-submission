@@ -280,11 +280,12 @@ class SubmitJobTaskTest(TestCase):
             interpreter=interpreter,
         )
 
-        modified = submit_job_to_server(job.pk, self.remote_password)
+        results = submit_job_to_server(job.pk, self.remote_password)
 
-        self.assertEqual(len(modified), 5)
+        self.assertEqual(len(results), 5)
         expected = ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
-        self.assertEqual(modified, expected)
+        filenames = [x.remote_filename for x in results]
+        self.assertEqual(filenames, expected)
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.success)
@@ -353,10 +354,11 @@ class SubmitJobTaskTest(TestCase):
         server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
         import time
         for i in range(5):
             with open('{}.txt'.format(i), 'w') as f:
-                f.write('foo')
+                print('{}'.format(i), file=f)
             time.sleep(0.1)
         '''
 
@@ -370,11 +372,17 @@ class SubmitJobTaskTest(TestCase):
             interpreter=interpreter,
         )
 
-        modified = submit_job_to_server(job.pk, self.remote_password)
+        results = submit_job_to_server(job.pk, self.remote_password)
 
-        self.assertEqual(len(modified), 5)
+        self.assertEqual(len(results), 5)
         expected = ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
-        self.assertEqual(modified, expected)
+        filenames = [x.remote_filename for x in results]
+        self.assertEqual(filenames, expected)
+
+        for i, result in enumerate(results):
+            actual = result.local_file.read().decode('utf-8')
+            expected = '{}\n'.format(i)
+            self.assertEqual(actual, expected)
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.success)

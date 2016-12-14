@@ -12,11 +12,14 @@ import socket
 import collections
 
 import six
-from paramiko import AuthenticationException, BadHostKeyException, AuthenticationException
+from paramiko import (
+    AuthenticationException, BadHostKeyException, AuthenticationException,
+)
 from paramiko.client import SSHClient, AutoAddPolicy
 from threading import Thread
+from django.core.files import File
 
-from .models import Log, Job, Interpreter
+from .models import Log, Job, Result, Interpreter
 
 try:
     from celery import shared_task
@@ -167,7 +170,7 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     script_attr = file_map[job.remote_filename]
     script_mtime = script_attr.st_mtime
 
-    modified = []
+    results = []
     for attr in file_attrs:
         if attr is script_attr:
             continue
@@ -175,10 +178,18 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
         if attr.st_mtime < script_mtime:
             continue
 
-        modified.append(attr.filename)
+        result = Result.objects.create(
+            remote_filename=attr.filename,
+            job=job,
+        )
+
+        with sftp.open(attr.filename, 'rb') as f:
+            result.local_file.save(attr.filename, File(f), save=True)
+
+        results.append(result)
 
     client.close()
-    return modified
+    return results
 
 
 def retrieve_files_from_job(results, password, username, client, log_policy,
@@ -203,7 +214,7 @@ def retrieve_files_from_job(results, password, username, client, log_policy,
 
     for result in results:
         with sftp.open(result.remote_filename, 'rb') as f:
-            result.local_filename = f
+            result.local_file = f
             result.save()
 
     client.close()

@@ -188,8 +188,8 @@ class Log(models.Model):
         return '{self.time} {self.job}'.format(self=self)
 
 
-def job_result_path(result, filename):
-    return 'job_{}/{}'.format(instance.user.id, filename)
+def job_result_path(instance, filename):
+    return 'job_{}/{}'.format(instance.job.id, filename)
 
 
 @python_2_unicode_compatible
@@ -201,7 +201,7 @@ class Result(TimeStampedModel):
         max_length=250,
     )
 
-    local_filename = models.FileField(
+    local_file = models.FileField(
         _('Local Filename'),
         help_text=_('The filename on the local server for this result'),
         upload_to=job_result_path,
