@@ -53,3 +53,6 @@ docs/_build
 db.sqlite3
 db.sqlite3
 venv
+
+#vscode
+.vscode/

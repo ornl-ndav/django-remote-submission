@@ -13,7 +13,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from django_remote_submission.models import Server, Job, Log
+from django_remote_submission.models import Server, Job, Log, Interpreter
 
 
 class ServerViewTest(APITestCase):
@@ -75,7 +75,11 @@ class JobViewTest(APITestCase):
             title='1-server-title',
             hostname='1-server-hostname.invalid',
         )
-        server.save()
+        interpreter = Interpreter.objects.create(
+            name = '1-interpreter-name',
+            path = '1-interpreter-path',
+        )
+        server.interpreters.set([interpreter])
 
         user = get_user_model().objects.create(
             username='1-user-username',
@@ -87,8 +91,8 @@ class JobViewTest(APITestCase):
             program='1-job-program',
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
-        job.save()
 
         url = reverse('job-list')
         data = None
@@ -131,7 +135,11 @@ class LogViewTest(APITestCase):
             title='1-server-title',
             hostname='1-server-hostname.invalid',
         )
-        server.save()
+        interpreter = Interpreter.objects.create(
+            name = '1-interpreter-name',
+            path = '1-interpreter-path',
+        )
+        server.interpreters.set([interpreter])
 
         user = get_user_model().objects.create(
             username='1-user-username',
@@ -143,6 +151,7 @@ class LogViewTest(APITestCase):
             program='1-job-program',
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
         job.save()
 
@@ -163,6 +172,7 @@ class LogViewTest(APITestCase):
                     'id': log.id,
                     'time': log.time.isoformat()[:-6] + 'Z',
                     'content': log.content,
+                    'stream': 'stdout',
                     'job': job.id,
                 },
             ],

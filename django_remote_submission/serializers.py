@@ -19,4 +19,4 @@ class JobSerializer(serializers.ModelSerializer):
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log
-        fields = ('id', 'time', 'content', 'job')
+        fields = ('id', 'time', 'content', 'stream', 'job')

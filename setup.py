@@ -8,7 +8,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-version = '0.2.0'
+version = '0.2.1'
 
 if sys.argv[-1] == 'publish':
     try:
@@ -37,7 +37,7 @@ setup(
     long_description=readme + '\n\n' + history,
     author='Tanner Hobson',
     author_email='thobson125@gmail.com',
-    url='https://github.com/player1537/django-remote-submission',
+    url='https://github.com/ornl-ndav/django-remote-submission',
     packages=[
         'django_remote_submission',
     ],

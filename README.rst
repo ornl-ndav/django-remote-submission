@@ -32,6 +32,19 @@ Then use it in a project::
         hostname='example.com',
         port=22,
     )[0]
+    
+    python2_interpreter = Interpreter.objects.get_or_create(
+        name = 'python2',
+        path = '/usr/bin/python2.7 -u',
+    )[0]
+    
+    python3_interpreter = Interpreter.objects.get_or_create(
+        name = 'python3',
+        path = '/usr/bin/python3.5 -u',
+    )[0]
+
+    server.interpreters.set([python2_interpreter,
+                             python3_interpreter])
 
     job = Job.objects.get_or_create(
         title='My Job Title',
@@ -40,6 +53,7 @@ Then use it in a project::
         remote_filename='test.py',
         owner=request.user,
         server=server,
+        interpreter=python2_interpreter,
     )[0]
 
     modified_files = submit_job_to_server(
@@ -74,6 +88,41 @@ some programs, and check that their output is correct.
 To run those tests as well, copy the ``.env.base`` file to ``.env`` and modify
 the variables as needed. If this file has not been set up, then those tests
 will be skipped, but it won't affect the success or failure of the tests.
+
+Running tests independtely, e.g.::
+
+    python runtests.py tests.test_tasks.SubmitJobTaskTest.test_normal_usage
+    python runtests.py tests.test_tasks.SubmitJobTaskTest
+    python runtests.py tests.test_tasks
+    python runtests.py tests.test_models
+
+=============================
+Running the Example
+=============================
+
+Launch Redis::
+
+    redis-server
+
+Launch Celery::
+
+    cd example
+    celery -A server.celery worker --loglevel=info
+
+Launch Django::
+
+    cd example
+    PYTHONPATH=../ ./manage.py makemigrations
+    PYTHONPATH=../ ./manage.py migrate
+    PYTHONPATH=../ ./manage.py loaddata fixtures/initial_data.json
+    PYTHONPATH=../ ./manage.py runserver
+
+Open in browser::
+
+    http://localhost:8000/admin/
+    http://localhost:8000/
+
+    
 
 Credits
 ---------

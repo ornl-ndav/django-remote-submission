@@ -11,8 +11,9 @@ Tests for `django-remote-submission` models module.
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from django_remote_submission.models import Server, Job, Log, Result
-
+from django_remote_submission.models import (
+    Server, Job, Log, Result, Interpreter,
+)
 
 class ServerModelTest(TestCase):
     def setUp(self):
@@ -35,6 +36,11 @@ class JobModelTest(TestCase):
             title='1-server-title',
             hostname='1-server-hostname.invalid',
         )
+        self.interpreter = Interpreter.objects.create(
+            name = '1-interpreter-name',
+            path = '1-interpreter-path',
+        )
+        self.server.interpreters.set([self.interpreter])
 
         self.job = Job.objects.create(
             title='1-job-title',
@@ -43,6 +49,7 @@ class JobModelTest(TestCase):
             server=self.server,
             remote_directory='1-job-remote_directory',
             remote_filename='1-job-remote_filename',
+            interpreter=self.interpreter,
         )
 
     def test_string_representation(self):
@@ -57,12 +64,18 @@ class LogModelTest(TestCase):
             title='1-server-title',
             hostname='1-server-hostname.invalid',
         )
+        self.interpreter = Interpreter.objects.create(
+            name = '1-interpreter-name',
+            path = '1-interpreter-path',
+        )
+        self.server.interpreters.set([self.interpreter])
 
         self.job = Job.objects.create(
             title='1-job-title',
             program='1-job-program',
             owner=self.user,
             server=self.server,
+            interpreter=self.interpreter,
         )
 
         self.log = Log.objects.create(

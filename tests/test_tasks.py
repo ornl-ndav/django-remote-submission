@@ -7,7 +7,7 @@ test_django-remote-submission
 
 Tests for `django-remote-submission` tasks module.
 """
-
+import sys
 import textwrap
 import datetime
 import itertools
@@ -18,7 +18,7 @@ from django.test import TestCase
 from django.db.models.signals import pre_save
 import environ
 
-from django_remote_submission.models import Server, Job, Log
+from django_remote_submission.models import Server, Job, Log, Interpreter
 from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
 try:
@@ -47,6 +47,8 @@ class SubmitJobTaskTest(TestCase):
             self.remote_filename = env('TEST_REMOTE_FILENAME')
             self.remote_user = env('TEST_REMOTE_USER')
             self.remote_password = env('TEST_REMOTE_PASSWORD')
+            self.interpreter_name = env('TEST_INTERPRETER_NAME')
+            self.interpreter_path = env('TEST_INTERPRETER_PATH')
         except ImproperlyConfigured:
             self.skipTest('Environment variables not set')
             return
@@ -56,16 +58,26 @@ class SubmitJobTaskTest(TestCase):
             username=self.remote_user,
         )[0]
 
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+
         server = Server.objects.create(
             title='1-server-title',
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
+        import sys
         import time
         for i in range(5):
-            print(i)
+            #print("line: {}".format(i))
+            print("line: {}".format(i), file=sys.stdout)
+            sys.stdout.flush()
             time.sleep(0.1)
         '''
 
@@ -76,6 +88,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         model_saved = Mock()
@@ -110,6 +123,12 @@ class SubmitJobTaskTest(TestCase):
             port=self.server_port,
         )
 
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
+
         program = '''
         import sys
         sys.exit(1)
@@ -122,6 +141,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password)
@@ -140,11 +160,19 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
         import time
+        import sys
         for i in range(5):
-            print(i)
+            print("Line number: {}.".format(i), file=sys.stdout)
+            sys.stdout.flush()
             time.sleep(0.1)
         '''
 
@@ -155,6 +183,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password,
@@ -176,8 +205,14 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
         import time
         for i in range(5):
             print(i)
@@ -191,6 +226,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password,
@@ -212,8 +248,14 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
         import time
         for i in range(5):
             with open('{}.txt'.format(i), 'w') as f:
@@ -228,6 +270,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         modified = submit_job_to_server(job.pk, self.remote_password)
@@ -250,12 +293,20 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
 
         program = '''
+        from __future__ import print_function
+        import sys
         import time
         for i in range(5):
-            print(i)
-            time.sleep(0.35)
+            print(i, file=sys.stdout)
+            sys.stdout.flush()
+            time.sleep(.35)
         '''
 
         job = Job.objects.create(
@@ -265,6 +316,7 @@ class SubmitJobTaskTest(TestCase):
             remote_filename=self.remote_filename,
             owner=user,
             server=server,
+            interpreter=interpreter,
         )
 
         submit_job_to_server(job.pk, self.remote_password,
@@ -274,6 +326,7 @@ class SubmitJobTaskTest(TestCase):
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.failure)
+
 
     def test_retrieve_changed_files(self):
         user = get_user_model().objects.get_or_create(
@@ -308,6 +361,56 @@ class SubmitJobTaskTest(TestCase):
         self.assertEqual(len(modified), 5)
         expected = ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
         self.assertEqual(modified, expected)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
+
+
+    def test_program_log_streams(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+        server.interpreters.set([interpreter])
+
+        program = '''
+        from __future__ import print_function
+        import sys
+        import time
+        for i in range(5):
+            print(i, file=sys.stdout)
+            sys.stdout.flush()
+            print(i, file=sys.stderr)
+            sys.stderr.flush()
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+            interpreter=interpreter,
+        )
+
+        submit_job_to_server(job.pk, self.remote_password,
+                             log_policy=LogPolicy.LOG_TOTAL)
+
+        self.assertEqual(Log.objects.count(), 2)
+        self.assertEqual(Log.objects.filter(stream='stdout').count(), 1)
+        self.assertEqual(Log.objects.filter(stream='stderr').count(), 1)
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.success)
