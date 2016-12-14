@@ -192,52 +192,6 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     return results
 
 
-def retrieve_files_from_job(results, password, username, client, log_policy,
-                            timeout):
-    job = results.job
-
-    if username is None:
-        username = job.owner.username
-
-    if client is None:
-        client = SSHClient()
-        client.set_missing_host_key_policy(AutoAddPolicy())
-        client.connect(
-            hostname=job.server.hostname,
-            port=job.server.port,
-            username=username,
-            password=password,
-        )
-
-    sftp = client.open_sftp()
-    sftp.chdir(job.remote_directory)
-
-    for result in results:
-        with sftp.open(result.remote_filename, 'rb') as f:
-            result.local_file = f
-            result.save()
-
-    client.close()
-
-
-@shared_task
-def retrieve_files(result_pks, password, username=None, client=None,
-                   log_policy=LogPolicy.LOG_LIVE, timeout=None):
-    results = [Result.objects.get(pk=pk) for pk in result_pks]
-
-    results_by_job = collections.defaultdict(list)
-    for result in results:
-        results_by_job[result.job.pk].append(result)
-
-    new_results = []
-    for results in six.itervalues(results_by_job):
-        updated = retrieve_files_from_job(results, password, username=username,
-                                          client=None, log_policy=log_policy,
-                                          timeout=timeout)
-
-        new_results.append(updated)
-
-
 def start_client(client, job, username, password=None,
     public_key_filename=os.path.expanduser('~/.ssh/id_rsa.pub')):
     '''
