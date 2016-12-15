@@ -153,3 +153,191 @@ def test_submit_job_normal_usage(env, job, job_model_saved):
 
     job = Job.objects.get(pk=job.pk)
     assert job.status == Job.STATUS.success
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+from __future__ import print_function
+import time
+import sys
+for i in range(5):
+    print("line: {}".format(i), file=sys.stdout if i % 2 == 0 else sys.stderr)
+    time.sleep(0.1)
+''')
+def test_submit_job_multiple_streams(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server
+    import datetime
+
+    submit_job_to_server(job.pk, env.remote_password)
+
+    assert Log.objects.count() == 5
+
+    min_delta = datetime.timedelta(seconds=0.05)
+    max_delta = datetime.timedelta(seconds=0.3)
+    for log1, log2 in pairwise(Log.objects.all()):
+        delta = log2.time - log1.time
+        assert min_delta <= delta <= max_delta
+
+    for i, log in enumerate(Log.objects.all()):
+        assert log.content == 'line: {}'.format(i)
+        if i % 2 == 0:
+            assert log.stream == 'stdout'
+        else:
+            assert log.stream == 'stderr'
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+import sys
+sys.exit(1)
+''')
+def test_submit_job_failure(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server
+
+    submit_job_to_server(job.pk, env.remote_password)
+
+    job = Job.objects.get(pk=job.pk)
+    assert job.status == Job.STATUS.failure
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+from __future__ import print_function
+import time
+import sys
+for i in range(5):
+    print('line: {}'.format(i), file=sys.stdout)
+    time.sleep(0.1)
+''')
+def test_submit_job_log_policy_log_total(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+
+    submit_job_to_server(job.pk, env.remote_password,
+                         log_policy=LogPolicy.LOG_TOTAL)
+
+    assert Log.objects.count() == 1
+    log = Log.objects.get()
+    assert log.content == '\n'.join('line: {}'.format(i) for i in range(5))
+    assert log.stream == 'stdout'
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+from __future__ import print_function
+import time
+import sys
+for i in range(5):
+    print('line: {}'.format(i), file=sys.stdout)
+    time.sleep(0.1)
+''')
+def test_submit_job_log_policy_log_none(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+
+    submit_job_to_server(job.pk, env.remote_password,
+                         log_policy=LogPolicy.LOG_NONE)
+
+    assert Log.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+from __future__ import print_function
+import time
+import sys
+for i in range(5):
+    print('line: {}'.format(i))
+    time.sleep(0.35)
+''')
+def test_submit_job_timeout(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+    import datetime
+
+    results = submit_job_to_server(job.pk, env.remote_password,
+                                   timeout=datetime.timedelta(seconds=1))
+
+    assert Log.objects.count() == 3
+
+    job = Job.objects.get(pk=job.pk)
+    assert job.status == Job.STATUS.failure
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+from __future__ import print_function
+import time
+import sys
+for i in range(5):
+    with open('{}.txt'.format(i), 'w') as f:
+        print('line: {}'.format(i), file=f)
+    time.sleep(0.1)
+''')
+def test_submit_job_modified_files(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+
+    results = submit_job_to_server(job.pk, env.remote_password)
+
+    assert len(results) == 5
+    assert [x.remote_filename for x in results] == \
+        ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
+
+    for i, result in enumerate(results):
+        assert result.local_file.read().decode('utf-8') == \
+            'line: {}\n'.format(i)
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+from __future__ import print_function
+import time
+import sys
+for i in range(5):
+    with open('{}.txt'.format(i), 'w') as f:
+        print('line: {}'.format(i), file=f)
+    time.sleep(0.1)
+''')
+def test_submit_job_modified_files_positive_pattern(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+
+    results = submit_job_to_server(job.pk, env.remote_password,
+                                   store_results=['0.txt', '[12].txt'])
+
+    assert len(results) == 3
+    assert [x.remote_filename for x in results] == \
+        ['0.txt', '1.txt', '2.txt']
+
+    for i, result in enumerate(results):
+        assert result.local_file.read().decode('utf-8') == \
+            'line: {}\n'.format(i)
+
+
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+from __future__ import print_function
+import time
+import sys
+for i in range(5):
+    with open('{}.txt'.format(i), 'w') as f:
+        print('line: {}'.format(i), file=f)
+    time.sleep(0.1)
+''')
+def test_submit_job_modified_files_negative_pattern(env, job):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+
+    results = submit_job_to_server(job.pk, env.remote_password,
+                                   store_results=['*', '![34].txt'])
+
+    assert len(results) == 3
+    assert [x.remote_filename for x in results] == \
+        ['0.txt', '1.txt', '2.txt']
+
+    for i, result in enumerate(results):
+        assert result.local_file.read().decode('utf-8') == \
+            'line: {}\n'.format(i)
