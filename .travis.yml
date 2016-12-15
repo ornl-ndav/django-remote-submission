@@ -8,13 +8,13 @@ python:
   - "2.7"
 
 before_install:
-  - pip install codecov
+  - pip install codecov pytest-cov
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -r requirements_test.txt
 
 # command to run tests using coverage, e.g. python setup.py test
-script: coverage run --source django_remote_submission pytest
+script: pytest --cov=django_remote_submission
 
 after_success:
   - codecov
