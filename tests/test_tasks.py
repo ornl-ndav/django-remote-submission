@@ -98,12 +98,13 @@ class SubmitJobTaskTest(TestCase):
 
         self.assertEqual(Log.objects.count(), 5)
 
-        min_delta = datetime.timedelta(seconds=0.1)
+        min_delta = datetime.timedelta(seconds=0.05)
         max_delta = datetime.timedelta(seconds=0.3)
 
         for log1, log2 in pairwise(Log.objects.all()):
             delta = log2.time - log1.time
-            self.assertTrue(min_delta <= delta <= max_delta)
+            self.assertGreaterEqual(delta, min_delta)
+            self.assertLessEqual(delta, max_delta)
 
         self.assertEqual(model_saved.call_count, 2)
         pre_save.disconnect(model_saved, sender=Job)
@@ -190,6 +191,12 @@ class SubmitJobTaskTest(TestCase):
                              log_policy=LogPolicy.LOG_TOTAL)
 
         self.assertEqual(Log.objects.count(), 1)
+        log = Log.objects.get()
+        self.assertEqual(log.content, (
+            '\n'.join('Line number: {}.'.format(x) for x in range(5))
+        ))
+        self.assertEqual(log.stream, 'stdout')
+
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.success)
@@ -273,11 +280,12 @@ class SubmitJobTaskTest(TestCase):
             interpreter=interpreter,
         )
 
-        modified = submit_job_to_server(job.pk, self.remote_password)
+        results = submit_job_to_server(job.pk, self.remote_password)
 
-        self.assertEqual(len(modified), 5)
+        self.assertEqual(len(results), 5)
         expected = ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
-        self.assertEqual(modified, expected)
+        filenames = [x.remote_filename for x in results]
+        self.assertEqual(filenames, expected)
 
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.success)
@@ -327,6 +335,164 @@ class SubmitJobTaskTest(TestCase):
         job = Job.objects.get(pk=job.pk)
         self.assertEqual(job.status, Job.STATUS.failure)
 
+
+    def test_retrieve_changed_files(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+        server.interpreters.set([interpreter])
+
+        program = '''
+        from __future__ import print_function
+        import time
+        for i in range(5):
+            with open('{}.txt'.format(i), 'w') as f:
+                print('{}'.format(i), file=f)
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+            interpreter=interpreter,
+        )
+
+        results = submit_job_to_server(job.pk, self.remote_password)
+
+        self.assertEqual(len(results), 5)
+        expected = ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
+        filenames = [x.remote_filename for x in results]
+        self.assertEqual(filenames, expected)
+
+        for i, result in enumerate(results):
+            actual = result.local_file.read().decode('utf-8')
+            expected = '{}\n'.format(i)
+            self.assertEqual(actual, expected)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
+
+
+    def test_retrieve_changed_files_positive_pattern(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+        server.interpreters.set([interpreter])
+
+        program = '''
+        from __future__ import print_function
+        import time
+        for i in range(5):
+            with open('{}.txt'.format(i), 'w') as f:
+                print('{}'.format(i), file=f)
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+            interpreter=interpreter,
+        )
+
+        results = submit_job_to_server(job.pk, self.remote_password,
+                                       store_results=['1.txt', '[23].txt'])
+
+        self.assertEqual(len(results), 3)
+        expected = ['1.txt', '2.txt', '3.txt']
+        filenames = [x.remote_filename for x in results]
+        self.assertEqual(filenames, expected)
+
+        for i, result in enumerate(results, start=1):
+            actual = result.local_file.read().decode('utf-8')
+            expected = '{}\n'.format(i)
+            self.assertEqual(actual, expected)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
+
+    def test_retrieve_changed_files_negative_pattern(self):
+        user = get_user_model().objects.get_or_create(
+            username=self.remote_user,
+        )[0]
+
+        interpreter = Interpreter.objects.create(
+            name = self.interpreter_name,
+            path = self.interpreter_path,
+        )
+
+        server = Server.objects.create(
+            title='1-server-title',
+            hostname=self.server_hostname,
+            port=self.server_port,
+        )
+        server.interpreters.set([interpreter])
+
+        program = '''
+        from __future__ import print_function
+        import time
+        for i in range(5):
+            with open('{}.txt'.format(i), 'w') as f:
+                print('{}'.format(i), file=f)
+            time.sleep(0.1)
+        '''
+
+        job = Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=self.remote_directory,
+            remote_filename=self.remote_filename,
+            owner=user,
+            server=server,
+            interpreter=interpreter,
+        )
+
+        results = submit_job_to_server(job.pk, self.remote_password,
+                                       store_results=['*', '![34].txt'])
+
+        self.assertEqual(len(results), 3)
+        expected = ['0.txt', '1.txt', '2.txt']
+        filenames = [x.remote_filename for x in results]
+        self.assertEqual(filenames, expected)
+
+        for i, result in enumerate(results):
+            actual = result.local_file.read().decode('utf-8')
+            expected = '{}\n'.format(i)
+            self.assertEqual(actual, expected)
+
+        job = Job.objects.get(pk=job.pk)
+        self.assertEqual(job.status, Job.STATUS.success)
+
+
     def test_program_log_streams(self):
         user = get_user_model().objects.get_or_create(
             username=self.remote_user,
@@ -337,6 +503,7 @@ class SubmitJobTaskTest(TestCase):
             hostname=self.server_hostname,
             port=self.server_port,
         )
+
         interpreter = Interpreter.objects.create(
             name = self.interpreter_name,
             path = self.interpreter_path,

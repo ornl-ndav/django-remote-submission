@@ -131,7 +131,7 @@ class Job(TimeStampedModel):
 
     def __str__(self):
         return '{self.title}'.format(self=self)
-    
+
     def clean(self):
         '''
         Makes sure the interpreter exists for this Server
@@ -185,4 +185,40 @@ class Log(models.Model):
         verbose_name_plural = _('logs')
 
     def __str__(self):
-        return '{self.time} : {self.job} : {self.stream}'.format(self=self)
+        return '{self.time} {self.job}'.format(self=self)
+
+
+def job_result_path(instance, filename):
+    return 'job_{}/{}'.format(instance.job.id, filename)
+
+
+@python_2_unicode_compatible
+class Result(TimeStampedModel):
+    remote_filename = models.TextField(
+        _('Remote Filename'),
+        help_text=_('The filename on the remote server for this result, '
+                    'relative to the remote directory of the job'),
+        max_length=250,
+    )
+
+    local_file = models.FileField(
+        _('Local Filename'),
+        help_text=_('The filename on the local server for this result'),
+        upload_to=job_result_path,
+        max_length=250,
+    )
+
+    job = models.ForeignKey(
+        'Job',
+        models.CASCADE,
+        related_name='results',
+        verbose_name=_('Result Job'),
+        help_text=_('The job this result came from'),
+    )
+
+    class Meta:
+        verbose_name = _('result')
+        verbose_name_plural = _('results')
+
+    def __str__(self):
+        return '{self.remote_filename} <{self.job}>'.format(self=self)
