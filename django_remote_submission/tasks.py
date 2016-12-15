@@ -10,6 +10,7 @@ import os.path
 import select
 import socket
 import collections
+import fnmatch
 
 import six
 from paramiko import (
@@ -39,6 +40,35 @@ class LogPolicy(object):
     LOG_NONE = 0
     LOG_LIVE = 1
     LOG_TOTAL = 2
+
+
+class ResultSet(object):
+    def __init__(self, patterns):
+        if patterns is None:
+            patterns = ['*']
+
+        self.patterns = patterns
+
+    def filter(self, filenames):
+        return [
+            x
+            for x in filenames
+            if self.matches(x)
+        ]
+
+    def matches(self, filename):
+        is_matching = False
+
+        for pattern in self.patterns:
+            if not pattern.startswith('!'):
+                if fnmatch.fnmatch(filename, pattern):
+                    is_matching = True
+            else:
+                if fnmatch.fnmatch(filename, pattern[1:]):
+                    is_matching = False
+
+        return is_matching
+
 
 def deploy_key_if_it_doesnt_exist(client, public_key_filename):
     '''
@@ -101,7 +131,8 @@ def store_logs(stream, stream_type, log_policy, job):
 
 @shared_task
 def submit_job_to_server(job_pk, password, username=None, client=None,
-                         log_policy=LogPolicy.LOG_LIVE, timeout=None):
+                         log_policy=LogPolicy.LOG_LIVE, timeout=None,
+                         store_results=None):
     '''
     TODO: Refactoring!!
     '''
@@ -170,12 +201,16 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     script_attr = file_map[job.remote_filename]
     script_mtime = script_attr.st_mtime
 
+    result_set = ResultSet(patterns=store_results)
     results = []
     for attr in file_attrs:
         if attr is script_attr:
             continue
 
         if attr.st_mtime < script_mtime:
+            continue
+
+        if not result_set.matches(attr.filename):
             continue
 
         result = Result.objects.create(
