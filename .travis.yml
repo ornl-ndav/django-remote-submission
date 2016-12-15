@@ -14,7 +14,7 @@ before_install:
 install: pip install -r requirements_test.txt
 
 # command to run tests using coverage, e.g. python setup.py test
-script: coverage run --source django_remote_submission runtests.py
+script: coverage run --source django_remote_submission pytest
 
 after_success:
   - codecov
