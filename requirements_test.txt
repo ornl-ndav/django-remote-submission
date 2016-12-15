@@ -14,3 +14,12 @@ tox>=1.7.0
 
 # Utility for working with environment variables
 django-environ>=0.4.0
+
+# For a nicer testing setup
+pytest
+
+# For testing Django with pytest
+pytest-django
+
+# For mocking different functions
+pytest-mock

@@ -1,9 +1,7 @@
-import pytest
+from django.conf import settings
 
-@pytest.fixture(autouse=True, scope='session')
-def django():
-    import django
-    django.configure(
+def pytest_configure():
+    settings.configure(
         DEBUG=True,
         USE_TZ=True,
         DATABASES={
@@ -54,5 +52,3 @@ def django():
             },
         },
     )
-
-    return django
