@@ -31,7 +31,7 @@ lint: ## check style with flake8
 	flake8 django_remote_submission tests
 
 test: ## run tests quickly with the default Python
-	python runtests.py tests
+	pytest
 
 test-all: ## run tests on every Python version with tox
 	tox
