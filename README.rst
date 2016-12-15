@@ -8,6 +8,9 @@ Django Remote Submission
 .. image:: https://travis-ci.org/ornl-ndav/django-remote-submission.png?branch=master
     :target: https://travis-ci.org/ornl-ndav/django-remote-submission
 
+.. image:: https://codecov.io/gh/ornl-ndav/django-remote-submission/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/ornl-ndav/django-remote-submission
+
 A Django application to manage long running job submission, including starting the job, saving logs, and storing results.
 
 Documentation
@@ -32,12 +35,12 @@ Then use it in a project::
         hostname='example.com',
         port=22,
     )[0]
-    
+
     python2_interpreter = Interpreter.objects.get_or_create(
         name = 'python2',
         path = '/usr/bin/python2.7 -u',
     )[0]
-    
+
     python3_interpreter = Interpreter.objects.get_or_create(
         name = 'python3',
         path = '/usr/bin/python3.5 -u',
@@ -122,7 +125,7 @@ Open in browser::
     http://localhost:8000/admin/
     http://localhost:8000/
 
-    
+
 
 Credits
 ---------
