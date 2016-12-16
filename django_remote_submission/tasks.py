@@ -42,6 +42,98 @@ class LogPolicy(object):
     LOG_TOTAL = 2
 
 
+class RemoteRunner(object):
+    """
+    Example usage:
+
+    >>> with RemoteRunner(job, 'password0') as runner:
+    ...     runner.copy_program()
+    ...     exit_status = runner.run_program(
+    ...         stdout_handler=lambda now, output, job: print('stdout', output),
+    ...         stderr_handler=lambda now, output, job: print('stderr', output),
+    ...     )
+    ...     runner.get_modified_files(
+    ...         file_handler=lambda filename, f, job: print('changed', filename),
+    ...     )
+
+    """
+    SUCCESS = object()
+    FAILURE = object()
+
+    def __init__(self, job, password, username=None):
+        self.client = start_client(job, username, password)
+        self.sftp = self.client.open_sftp()
+        self.job = job
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def close(self):
+        self.sftp.close()
+        self.client.close()
+
+    def copy_program(self, program):
+        self.sftp.chdir(job.remote_directory)
+        self.sftp.putfo(six.StringIO(job.program), job.remote_filename)
+
+    def run_program(self, timeout=None, stdout_handler=None,
+                    stderr_handler=None):
+        command = self._format_command(timeout)
+
+        transport = self.client.get_transport()
+        channel = transport.open_session()
+
+        channel.exec_command(command)
+        while True:
+            now = datetime.datetime.now()
+            if channel.recv_ready():
+                output = channel.recv(1024).decode('utf-8')
+                stdout_handler(now, output, job)
+
+            if channel.recv_stderr_ready():
+                output = channel.recv_stderr(1024).decode('utf-8')
+                stderr_handler(now, output, job)
+
+            if channel.exit_status_ready():
+                if channel.recv_exit_status() == 0:
+                    return RemoteRunner.SUCCESS
+                else:
+                    return RemoteRunner.FAILURE
+
+
+    def get_modified_files(self, file_handler=None):
+        file_attrs = self.sftp.listdir_attr()
+        file_map = { attr.filename: attr for attr in file_attrs }
+        script_attr = file_map[job.remote_filename]
+        script_mtime = script_attr.st_mtime
+
+        result_set = ResultSet(patterns=store_results)
+        results = []
+        for attr in file_attrs:
+            if attr is script_attr:
+                continue
+
+            if attr.st_mtime < script_mtime:
+                continue
+
+            if not result_set.matches(attr.filename):
+                continue
+
+            with sftp.open(attr.filename, 'rb') as f:
+                file_handler(attr.filename, f, job)
+
+    def _format_command(self, timeout=None):
+        command = '{} {}'.format(self.job.interpreter.path, job.remote_filename)
+        if timeout is not None:
+            command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
+        command='cd {} && {}'.format(job.remote_directory, command)
+
+        return command
+
+
 class ResultSet(object):
     def __init__(self, patterns):
         if patterns is None:
@@ -143,7 +235,7 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
         username = job.owner.username
 
     if client is None:
-        client = start_client(client, job, username, password)
+        client = start_client(job, username, password)
 
     sftp = client.open_sftp()
     sftp.chdir(job.remote_directory)
@@ -227,7 +319,7 @@ def submit_job_to_server(job_pk, password, username=None, client=None,
     return results
 
 
-def start_client(client, job, username, password=None,
+def start_client(job, username, password=None,
     public_key_filename=os.path.expanduser('~/.ssh/id_rsa.pub')):
     '''
     This starts an
