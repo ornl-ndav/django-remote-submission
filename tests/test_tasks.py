@@ -24,7 +24,7 @@ def pairwise(iterable):
 EnvBase = collections.namedtuple('Env', [
     'server_hostname', 'server_port', 'remote_directory', 'remote_filename',
     'remote_user', 'remote_password', 'interpreter_name',
-    'interpreter_path',
+    'interpreter_path', 'interpreter_arguments',
 ])
 
 
@@ -54,6 +54,7 @@ def env():
             remote_password=env('TEST_REMOTE_PASSWORD'),
             interpreter_name=env('TEST_INTERPRETER_NAME'),
             interpreter_path=env('TEST_INTERPRETER_PATH'),
+            interpreter_arguments=env.list('TEST_INTERPRETER_ARGUMENTS'),
         )
     except Exception as e:
         pytest.skip('Environment variables not set: {!r}'.format(e))
@@ -75,6 +76,7 @@ def interpreter(env):
     return Interpreter.objects.create(
         name=env.interpreter_name,
         path=env.interpreter_path,
+        arguments=env.interpreter_arguments,
     )
 
 
@@ -147,7 +149,7 @@ def test_submit_job_normal_usage(env, job, job_model_saved):
         assert min_delta <= delta <= max_delta
 
     for i, log in enumerate(Log.objects.all()):
-        assert log.content == 'line: {}'.format(i)
+        assert log.content == 'line: {}\n'.format(i)
 
     assert job_model_saved.call_count == 2
 
@@ -180,7 +182,7 @@ def test_submit_job_multiple_streams(env, job):
         assert min_delta <= delta <= max_delta
 
     for i, log in enumerate(Log.objects.all()):
-        assert log.content == 'line: {}'.format(i)
+        assert log.content == 'line: {}\n'.format(i)
         if i % 2 == 0:
             assert log.stream == 'stdout'
         else:
@@ -220,7 +222,7 @@ def test_submit_job_log_policy_log_total(env, job):
 
     assert Log.objects.count() == 1
     log = Log.objects.get()
-    assert log.content == '\n'.join('line: {}'.format(i) for i in range(5))
+    assert log.content == '\n'.join('line: {}\n'.format(i) for i in range(5))
     assert log.stream == 'stdout'
 
 

@@ -46,7 +46,7 @@ def pytest_configure():
                 },
                 'django_remote_submission': {
                     'handlers': ['console'],
-                    'level': 'CRITICAL',
+                    'level': 'DEBUG',
                     'propagate': True,
                 },
             },

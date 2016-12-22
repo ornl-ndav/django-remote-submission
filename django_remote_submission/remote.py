@@ -3,17 +3,22 @@
 """
 
 from __future__ import absolute_import, unicode_literals, print_function
-import shlex
 import logging
 import os
 import textwrap
 import datetime
+
+try:
+    from shlex import quote as cmd_quote
+except ImportError:
+    from pipes import quote as cmd_quote
 
 from paramiko import (
     AuthenticationException, BadHostKeyException,
 )
 from paramiko.client import SSHClient, AutoAddPolicy
 from django.utils.timezone import now
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +67,12 @@ class RemoteWrapper(object):
     def listdir_attr(self):
         return self._sftp.listdir_attr()
 
-    def exec_command(self, args, timeout=None, stdout_handler=None,
+    def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
                      stderr_handler=None):
-        command = self._make_command(args, timeout)
+        chdir = self._make_command(['cd', workdir], None)
+        run = self._make_command(args, timeout)
+        command = '{} && {}'.format(chdir, run)
+        print('exec_command(command={!r})'.format(command))
 
         transport = self._client.get_transport()
         channel = transport.open_session()
@@ -73,17 +81,26 @@ class RemoteWrapper(object):
         while True:
             current_time = now()
             if channel.recv_ready():
+                print('channel.recv_ready()')
                 output = channel.recv(1024).decode('utf-8')
                 stdout_handler(current_time, output)
 
             if channel.recv_stderr_ready():
+                print('channel.recv_stderr_ready()')
                 output = channel.recv_stderr(1024).decode('utf-8')
                 stderr_handler(current_time, output)
 
             if channel.exit_status_ready():
+                print('channel.exit_status_ready()')
+                if channel.recv_ready() or channel.recv_stderr_ready():
+                    print('try again')
+                    continue
+
                 if channel.recv_exit_status() == 0:
+                    print('return True')
                     return True
                 else:
+                    print('return False')
                     return False
 
     def _start_client(self, password, public_key_filename):
@@ -109,7 +126,7 @@ class RemoteWrapper(object):
             if password is None:
                 logger.error("Connection with public key failed! "
                              "The password is mandatory")
-                raise ValueError('needs password') from e
+                six.raise_from(ValueError('needs password'), e)
 
             try:
                 logger.info("Connecting to %s with password.", server_hostname)
@@ -123,13 +140,12 @@ class RemoteWrapper(object):
 
             except AuthenticationException as e:
                 logger.error("Authenctication error! Wrong password...")
-                raise ValueError('incorrect password') from e
+                six.raise_from(ValueError('incorrect password'), e)
 
-            else:
-                return client
+        return client
 
     def _make_command(self, args, timeout):
-        command = ' '.join(shlex.quote(arg) for arg in args)
+        command = ' '.join(cmd_quote(arg) for arg in args)
 
         if timeout is not None:
             command = 'timeout {}s {}'.format(timeout.total_seconds(), command)

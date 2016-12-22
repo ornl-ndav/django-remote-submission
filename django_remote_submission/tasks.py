@@ -108,18 +108,21 @@ class LogContainer(object):
         self.stderr = []
 
     def write(self, lst, now, output):
-        lst.append(LogContainer.LogLine(
-            now=now,
-            output=output,
-        ))
+        if self.log_policy != LogPolicy.LOG_NONE:
+            lst.append(LogContainer.LogLine(
+                now=now,
+                output=output,
+            ))
 
         if self.log_policy == LogPolicy.LOG_LIVE:
             self.flush()
 
     def write_stdout(self, now, output):
+        print('write_stdout(now={!r}, output={!r})'.format(now, output))
         self.write(self.stdout, now, output)
 
     def write_stderr(self, now, output):
+        print('write_stderr(now={!r}, output={!r})'.format(now, output))
         self.write(self.stderr, now, output)
 
     def flush(self):
@@ -127,7 +130,7 @@ class LogContainer(object):
 
         if len(self.stdout) > 0:
             Log.objects.create(
-                time=self.stdout[-1],
+                time=self.stdout[-1].now,
                 content='\n'.join(line.output for line in self.stdout),
                 stream='stdout',
                 job=self.job,
@@ -174,14 +177,23 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
         job.status = Job.STATUS.submitted
         job.save()
 
+        interp = job.interpreter.path
+        workdir = job.remote_directory
+        args = job.interpreter.arguments
+        filename = job.remote_filename
+
         job_status = wrapper.exec_command(
-            [job.interpreter.path, job.remote_filename],
+            [interp] + args + [filename],
+            workdir,
             timeout=timeout,
             stdout_handler=logs.write_stdout,
             stderr_handler=logs.write_stderr,
         )
 
         logs.flush()
+
+        job.status = Job.STATUS.success if job_status else Job.STATUS.failure
+        job.save()
 
         file_attrs = wrapper.listdir_attr()
         file_map = { attr.filename: attr for attr in file_attrs }
