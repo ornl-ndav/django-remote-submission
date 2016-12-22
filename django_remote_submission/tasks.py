@@ -174,6 +174,8 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
         with wrapper.open(job.remote_filename, 'wt') as f:
             f.write(job.program)
 
+        import time; time.sleep(1)
+
         job.status = Job.STATUS.submitted
         job.save()
 
@@ -202,6 +204,8 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
 
         results = []
         for attr in file_attrs:
+            print('{!r}'.format(attr))
+
             if attr is script_attr:
                 continue
 
@@ -209,7 +213,10 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
                 continue
 
             if not is_matching(attr.filename, store_results):
+                print('is_matching: {}'.format(attr.filename))
                 continue
+            else:
+                print('not is_matching: {}'.format(attr.filename))
 
             result = Result.objects.create(
                 remote_filename=attr.filename,

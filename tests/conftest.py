@@ -1,5 +1,11 @@
 from django.conf import settings
 
+def pytest_addoption(parser):
+    parser.addoption(
+        '--ci', action='store_true',
+        help='disable tests that do not work on continuous integration',
+    )
+
 def pytest_configure():
     settings.configure(
         DEBUG=True,
