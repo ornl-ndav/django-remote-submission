@@ -168,10 +168,12 @@ def wrappers(request, monkeypatch):
             Attr = namedtuple('Attr', ['filename', 'st_mtime'])
 
             results = []
-            for dir_entry in os.scandir(self.workdir):
+            for filename in os.listdir(self.workdir):
+                stat = os.stat(os.path.join(self.workdir, filename))
+
                 results.append(Attr(
-                    filename=dir_entry.name,
-                    st_mtime=dir_entry.stat().st_mtime,
+                    filename=filename,
+                    st_mtime=stat.st_mtime,
                 ))
 
             return results
