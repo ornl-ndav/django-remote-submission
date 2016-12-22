@@ -138,7 +138,7 @@ def wrappers(request, monkeypatch):
     import os
     import os.path
     import select
-    from subprocess import Popen, PIPE, TimeoutExpired
+    from subprocess import Popen, PIPE
     from collections import namedtuple
     from django.utils.timezone import now
 
