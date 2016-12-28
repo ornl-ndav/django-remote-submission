@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import ast
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -10,6 +11,37 @@ from model_utils import Choices
 from model_utils.fields import StatusField, AutoCreatedField
 from model_utils.models import TimeStampedModel
 
+
+# Thanks http://stackoverflow.com/a/7394475
+class ListField(models.TextField):
+    description = "Stores a python list"
+
+    def __init__(self, *args, **kwargs):
+        super(ListField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if not value:
+            value = []
+
+        if isinstance(value, list):
+            return value
+
+        return ast.literal_eval(value)
+
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
+    def get_prep_value(self, value):
+        if value is None:
+            return value
+
+        return str(value)
+
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        return self.get_db_prep_value(value)
+
+
 @python_2_unicode_compatible
 class Interpreter(TimeStampedModel):
     name = models.CharField(
@@ -20,7 +52,13 @@ class Interpreter(TimeStampedModel):
 
     path = models.CharField(
         _('Command Full Path'),
-        help_text=_('The full path of the interpreter path and additional parameters.'),
+        help_text=_('The full path of the interpreter path.'),
+        max_length=256,
+    )
+
+    arguments = ListField(
+        _('Command Arguments'),
+        help_text=_('The arguments used when running the interpreter'),
         max_length=256,
     )
 
@@ -30,6 +68,7 @@ class Interpreter(TimeStampedModel):
 
     def __str__(self):
         return '{self.name} ({self.path})'.format(self=self)
+
 
 @python_2_unicode_compatible
 class Server(TimeStampedModel):

@@ -21,6 +21,7 @@ from threading import Thread
 from django.core.files import File
 
 from .models import Log, Job, Result, Interpreter
+from .remote import RemoteWrapper
 
 try:
     from celery import shared_task
@@ -42,215 +43,153 @@ class LogPolicy(object):
     LOG_TOTAL = 2
 
 
-class ResultSet(object):
-    def __init__(self, patterns):
-        if patterns is None:
-            patterns = ['*']
+def is_matching(filename, patterns=None):
+    if patterns is None:
+        patterns = ['*']
 
-        self.patterns = patterns
+    is_matching = False
 
-    def filter(self, filenames):
-        return [
-            x
-            for x in filenames
-            if self.matches(x)
-        ]
+    for pattern in patterns:
+        if not pattern.startswith('!'):
+            if fnmatch.fnmatch(filename, pattern):
+                is_matching = True
+        else:
+            if fnmatch.fnmatch(filename, pattern[1:]):
+                is_matching = False
 
-    def matches(self, filename):
-        is_matching = False
-
-        for pattern in self.patterns:
-            if not pattern.startswith('!'):
-                if fnmatch.fnmatch(filename, pattern):
-                    is_matching = True
-            else:
-                if fnmatch.fnmatch(filename, pattern[1:]):
-                    is_matching = False
-
-        return is_matching
+    return is_matching
 
 
-def deploy_key_if_it_doesnt_exist(client, public_key_filename):
-    '''
+class LogContainer(object):
+    LogLine = collections.namedtuple('LogLine', [
+        'now', 'output',
+    ])
 
-    '''
-    key = open(public_key_filename).read()
-    client.exec_command('mkdir -p ~/.ssh/')
+    def __init__(self, job, log_policy):
+        self.job = job
+        self.log_policy = log_policy
+        self.stdout = []
+        self.stderr = []
 
-    command = '''
-    KEY="%s"
-    if [ -z "$(grep \"$KEY\" ~/.ssh/authorized_keys )" ];
-    then
-        echo $KEY >> ~/.ssh/authorized_keys;
-        echo key added.;
-    fi;
-    '''%key
+    def write(self, lst, now, output):
+        if self.log_policy != LogPolicy.LOG_NONE:
+            lst.append(LogContainer.LogLine(
+                now=now,
+                output=output,
+            ))
 
-    stdin, stdout, stderr  = client.exec_command(command)
-    logger.debug(stdout.readlines())
-    logger.debug(stderr.readlines())
+        if self.log_policy == LogPolicy.LOG_LIVE:
+            self.flush()
 
-    client.exec_command('chmod 644 ~/.ssh/authorized_keys')
-    client.exec_command('chmod 700 ~/.ssh/')
+    def write_stdout(self, now, output):
+        print('write_stdout(now={!r}, output={!r})'.format(now, output))
+        self.write(self.stdout, now, output)
 
-all_lines = {
-    'stdout' : [],
-    'stderr' : [],
-}
+    def write_stderr(self, now, output):
+        print('write_stderr(now={!r}, output={!r})'.format(now, output))
+        self.write(self.stderr, now, output)
 
-def store_logs(stream, stream_type, log_policy, job):
-    '''
-    Store logs in the DB
-    @param stream_type :: One of ('stdout','stderr')
-    '''
-    global all_lines
+    def flush(self):
+        print('flush: {!r} {!r}'.format(self.stdout, self.stderr))
 
-    for line in stream.split("\n"):
-        line = line.strip("\n")
-        if line:
-            if log_policy == LogPolicy.LOG_LIVE:
-                logger.debug("LOG_LIVE :: %s :: %s",stream_type,line)
-                Log.objects.create(
-                    content=line,
-                    stream=stream_type,
-                    job=job,
-                )
+        if len(self.stdout) > 0:
+            Log.objects.create(
+                time=self.stdout[-1].now,
+                content='\n'.join(line.output for line in self.stdout),
+                stream='stdout',
+                job=self.job,
+            )
 
-            elif log_policy == LogPolicy.LOG_TOTAL:
-                logger.debug("LOG_TOTAL :: %s :: %s",stream_type,line)
-                all_lines[stream_type].append(line)
+            del self.stdout[:]
 
-            elif log_policy == LogPolicy.LOG_NONE:
-                logger.debug("LOG_NONE :: %s :: %s",stream_type,line)
-                pass
+        if len(self.stderr) > 0:
+            Log.objects.create(
+                time=self.stderr[-1].now,
+                content='\n'.join(line.output for line in self.stderr),
+                stream='stderr',
+                job=self.job,
+            )
 
-            else:
-                msg = 'Unexpected value for log_policy: {!r}'.format(log_policy)
-                raise ValueError(msg)
+            del self.stderr[:]
 
 
 @shared_task
-def submit_job_to_server(job_pk, password, username=None, client=None,
-                         log_policy=LogPolicy.LOG_LIVE, timeout=None,
-                         store_results=None):
-    '''
-    TODO: Refactoring!!
-    '''
-
+def submit_job_to_server(job_pk, password, username=None, timeout=None,
+                         log_policy=LogPolicy.LOG_LIVE, store_results=None):
     job = Job.objects.get(pk=job_pk)
 
     if username is None:
         username = job.owner.username
 
-    if client is None:
-        client = start_client(client, job, username, password)
+    wrapper = RemoteWrapper(
+        hostname=job.server.hostname,
+        username=username,
+        port=job.server.port,
+    )
 
-    sftp = client.open_sftp()
-    sftp.chdir(job.remote_directory)
-    sftp.putfo(six.StringIO(job.program), job.remote_filename)
+    logs = LogContainer(
+        job=job,
+        log_policy=log_policy,
+    )
 
-    job.status = Job.STATUS.submitted
-    job.save()
+    with wrapper.connect(password):
+        wrapper.chdir(job.remote_directory)
 
-    command = '{} {}'.format(job.interpreter.path,job.remote_filename)
-    if timeout is not None:
-        command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
-    command='mkdir -p {0} && cd {0} && {1}'.format(job.remote_directory,command)
+        with wrapper.open(job.remote_filename, 'wt') as f:
+            f.write(job.program)
 
-    transport = client.get_transport()
-    channel = transport.open_session()
+        import time; time.sleep(1)
 
-    logger.debug("Executing remotely the command: %s.", command)
-    channel.exec_command(command)
-    logger.debug("Executed...")
-    done = False
-    while not done:
-        if channel.recv_ready():
-            stream = channel.recv(1024).decode('utf-8')
-            store_logs(stream,'stdout', log_policy, job)
-        if channel.recv_stderr_ready():
-            stream = channel.recv_stderr(1024).decode('utf-8')
-            store_logs(stream,'stderr', log_policy, job)
-        if channel.exit_status_ready():
-            if channel.recv_exit_status() == 0:
-                job.status = Job.STATUS.success
-            else:
-                job.status = Job.STATUS.failure
-            job.save()
-            done = True
+        job.status = Job.STATUS.submitted
+        job.save()
 
-    global all_lines
-    if log_policy == LogPolicy.LOG_TOTAL:
-        if all_lines['stdout']:
-            Log.objects.create(
-                content='\n'.join(all_lines['stdout']),
-                stream='stdout',
-                job=job,
-            )
-            all_lines['stdout'] = []
-        if all_lines['stderr']:
-            Log.objects.create(
-                content='\n'.join(all_lines['stderr']),
-                stream='stderr',
-                job=job,
-            )
-            all_lines['stderr'] = []
+        interp = job.interpreter.path
+        workdir = job.remote_directory
+        args = job.interpreter.arguments
+        filename = job.remote_filename
 
-    file_attrs = sftp.listdir_attr()
-    file_map = { attr.filename: attr for attr in file_attrs }
-    script_attr = file_map[job.remote_filename]
-    script_mtime = script_attr.st_mtime
-
-    result_set = ResultSet(patterns=store_results)
-    results = []
-    for attr in file_attrs:
-        if attr is script_attr:
-            continue
-
-        if attr.st_mtime < script_mtime:
-            continue
-
-        if not result_set.matches(attr.filename):
-            continue
-
-        result = Result.objects.create(
-            remote_filename=attr.filename,
-            job=job,
+        job_status = wrapper.exec_command(
+            [interp] + args + [filename],
+            workdir,
+            timeout=timeout,
+            stdout_handler=logs.write_stdout,
+            stderr_handler=logs.write_stderr,
         )
 
-        with sftp.open(attr.filename, 'rb') as f:
-            result.local_file.save(attr.filename, File(f), save=True)
+        logs.flush()
 
-        results.append(result)
+        job.status = Job.STATUS.success if job_status else Job.STATUS.failure
+        job.save()
 
-    client.close()
+        file_attrs = wrapper.listdir_attr()
+        file_map = { attr.filename: attr for attr in file_attrs }
+        script_attr = file_map[job.remote_filename]
+        script_mtime = script_attr.st_mtime
+
+        results = []
+        for attr in file_attrs:
+            print('{!r}'.format(attr))
+
+            if attr is script_attr:
+                continue
+
+            if attr.st_mtime < script_mtime:
+                continue
+
+            if not is_matching(attr.filename, store_results):
+                print('is_matching: {}'.format(attr.filename))
+                continue
+            else:
+                print('not is_matching: {}'.format(attr.filename))
+
+            result = Result.objects.create(
+                remote_filename=attr.filename,
+                job=job,
+            )
+
+            with wrapper.open(attr.filename, 'rb') as f:
+                result.local_file.save(attr.filename, File(f), save=True)
+
+            results.append(result)
+
     return results
-
-
-def start_client(client, job, username, password=None,
-    public_key_filename=os.path.expanduser('~/.ssh/id_rsa.pub')):
-    '''
-    This starts an
-    '''
-    client = SSHClient()
-    client.set_missing_host_key_policy(AutoAddPolicy())
-
-    server_hostname = job.server.hostname
-    server_port = job.server.port
-    try:
-        logger.info("Connecting to %s with public key.", server_hostname)
-        client.connect(server_hostname, port=server_port, username=username,
-            key_filename=public_key_filename)
-    except (AuthenticationException, BadHostKeyException):
-        try:
-            if password is None:
-                logger.error("Connection with public key failed! The password is mandatory")
-                return None
-            logger.info("Connecting to %s with password.", server_hostname)
-            client.connect(server_hostname, port=server_port, username=username,
-                password=password)
-            deploy_key_if_it_doesnt_exist(client, public_key_filename)
-        except AuthenticationException:
-            logger.error("Authenctication error! Wrong password...")
-            return None
-    return client

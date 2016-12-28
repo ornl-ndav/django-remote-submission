@@ -57,3 +57,8 @@ release: clean ## package and upload a release
 sdist: clean ## package
 	python setup.py sdist
 	ls -l dist
+
+makemigrations: ## update migrations with new model changes
+	cd example && \
+	source venv/bin/activate && \
+	python manage.py makemigrations django_remote_submission

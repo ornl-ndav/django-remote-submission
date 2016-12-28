@@ -11,6 +11,7 @@ Tests for `django-remote-submission` tasks module.
 import collections
 import pytest
 import textwrap
+import os
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -21,10 +22,16 @@ def pairwise(iterable):
     return zip(a, b)
 
 
+skip_if_ci = pytest.mark.skipif(
+    pytest.config.getoption('--ci'),
+    reason='some things do not work on ci',
+)
+
+
 EnvBase = collections.namedtuple('Env', [
     'server_hostname', 'server_port', 'remote_directory', 'remote_filename',
     'remote_user', 'remote_password', 'interpreter_name',
-    'interpreter_path',
+    'interpreter_path', 'interpreter_arguments',
 ])
 
 
@@ -54,6 +61,7 @@ def env():
             remote_password=env('TEST_REMOTE_PASSWORD'),
             interpreter_name=env('TEST_INTERPRETER_NAME'),
             interpreter_path=env('TEST_INTERPRETER_PATH'),
+            interpreter_arguments=env.list('TEST_INTERPRETER_ARGUMENTS'),
         )
     except Exception as e:
         pytest.skip('Environment variables not set: {!r}'.format(e))
@@ -75,6 +83,7 @@ def interpreter(env):
     return Interpreter.objects.create(
         name=env.interpreter_name,
         path=env.interpreter_path,
+        arguments=env.interpreter_arguments,
     )
 
 
@@ -123,6 +132,91 @@ def job_model_saved(mocker):
     pre_save.disconnect(mock, sender=Job)
 
 
+@pytest.fixture(params=[True, False])
+def wrappers(request, monkeypatch):
+    from django_remote_submission.remote import RemoteWrapper
+    import os
+    import os.path
+    import select
+    from subprocess import Popen, PIPE
+    from collections import namedtuple
+    from django.utils.timezone import now
+
+    class LocalWrapper(RemoteWrapper):
+        def __init__(self, *args, **kwargs):
+            self.workdir = os.getcwd()
+
+        def connect(self, *args, **kwargs):
+            return self
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args, **kwargs):
+            pass
+
+        def close(self, *args, **kwargs):
+            pass
+
+        def chdir(self, remote_directory):
+            self.workdir = os.path.join(self.workdir, remote_directory)
+
+        def open(self, filename, mode):
+            return open(os.path.join(self.workdir, filename), mode)
+
+        def listdir_attr(self):
+            Attr = namedtuple('Attr', ['filename', 'st_mtime'])
+
+            results = []
+            for filename in os.listdir(self.workdir):
+                stat = os.stat(os.path.join(self.workdir, filename))
+
+                results.append(Attr(
+                    filename=filename,
+                    st_mtime=stat.st_mtime,
+                ))
+
+            return results
+
+        def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
+                         stderr_handler=None):
+            if timeout is not None:
+                args = ['timeout', '{}s'.format(timeout.total_seconds())] + args
+
+            print('{!r}'.format(args))
+            process = Popen(args, bufsize=1, stdout=PIPE, stderr=PIPE,
+                            cwd=self.workdir, universal_newlines=True)
+
+            rlist = [process.stdout, process.stderr]
+
+            print('before loop')
+            while process.poll() is None:
+                ready, _, _ = select.select(rlist, [], [])
+
+                current_time = now()
+                if process.stdout in ready:
+                    stdout = process.stdout.readline()
+
+                    if stdout != '':
+                        stdout_handler(current_time, stdout)
+
+                if process.stderr in ready:
+                    stderr = process.stderr.readline()
+
+                    if stderr != '':
+                        stderr_handler(current_time, stderr)
+
+            print('after loop')
+
+            return process.returncode == 0
+
+    if request.param:
+        monkeypatch.setattr('django_remote_submission.remote.RemoteWrapper',
+                            LocalWrapper)
+    elif pytest.config.getoption('--ci'):
+        pytest.skip('running on continuous integration')
+
+
 @pytest.mark.django_db
 @pytest.mark.job_program('''\
 from __future__ import print_function
@@ -131,7 +225,7 @@ for i in range(5):
     print("line: {}".format(i))
     time.sleep(0.1)
 ''')
-def test_submit_job_normal_usage(env, job, job_model_saved):
+def test_submit_job_normal_usage(env, job, job_model_saved, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
     import datetime
@@ -147,7 +241,7 @@ def test_submit_job_normal_usage(env, job, job_model_saved):
         assert min_delta <= delta <= max_delta
 
     for i, log in enumerate(Log.objects.all()):
-        assert log.content == 'line: {}'.format(i)
+        assert log.content == 'line: {}\n'.format(i)
 
     assert job_model_saved.call_count == 2
 
@@ -164,7 +258,7 @@ for i in range(5):
     print("line: {}".format(i), file=sys.stdout if i % 2 == 0 else sys.stderr)
     time.sleep(0.1)
 ''')
-def test_submit_job_multiple_streams(env, job):
+def test_submit_job_multiple_streams(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
     import datetime
@@ -180,7 +274,7 @@ def test_submit_job_multiple_streams(env, job):
         assert min_delta <= delta <= max_delta
 
     for i, log in enumerate(Log.objects.all()):
-        assert log.content == 'line: {}'.format(i)
+        assert log.content == 'line: {}\n'.format(i)
         if i % 2 == 0:
             assert log.stream == 'stdout'
         else:
@@ -192,7 +286,7 @@ def test_submit_job_multiple_streams(env, job):
 import sys
 sys.exit(1)
 ''')
-def test_submit_job_failure(env, job):
+def test_submit_job_failure(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
 
@@ -211,7 +305,7 @@ for i in range(5):
     print('line: {}'.format(i), file=sys.stdout)
     time.sleep(0.1)
 ''')
-def test_submit_job_log_policy_log_total(env, job):
+def test_submit_job_log_policy_log_total(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
@@ -220,7 +314,7 @@ def test_submit_job_log_policy_log_total(env, job):
 
     assert Log.objects.count() == 1
     log = Log.objects.get()
-    assert log.content == '\n'.join('line: {}'.format(i) for i in range(5))
+    assert log.content == '\n'.join('line: {}\n'.format(i) for i in range(5))
     assert log.stream == 'stdout'
 
 
@@ -233,7 +327,7 @@ for i in range(5):
     print('line: {}'.format(i), file=sys.stdout)
     time.sleep(0.1)
 ''')
-def test_submit_job_log_policy_log_none(env, job):
+def test_submit_job_log_policy_log_none(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
@@ -252,7 +346,7 @@ for i in range(5):
     print('line: {}'.format(i))
     time.sleep(0.35)
 ''')
-def test_submit_job_timeout(env, job):
+def test_submit_job_timeout(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import datetime
@@ -276,7 +370,7 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files(env, job):
+def test_submit_job_modified_files(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
@@ -301,7 +395,7 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files_positive_pattern(env, job):
+def test_submit_job_modified_files_positive_pattern(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
@@ -327,7 +421,7 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files_negative_pattern(env, job):
+def test_submit_job_modified_files_negative_pattern(env, job, wrappers):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
