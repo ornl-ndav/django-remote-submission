@@ -60,42 +60,6 @@ def is_matching(filename, patterns=None):
     return is_matching
 
 
-all_lines = {
-    'stdout' : [],
-    'stderr' : [],
-}
-
-def store_logs(stream, stream_type, log_policy, job):
-    '''
-    Store logs in the DB
-    @param stream_type :: One of ('stdout','stderr')
-    '''
-    global all_lines
-
-    for line in stream.split("\n"):
-        line = line.strip("\n")
-        if line:
-            if log_policy == LogPolicy.LOG_LIVE:
-                logger.debug("LOG_LIVE :: %s :: %s",stream_type,line)
-                Log.objects.create(
-                    content=line,
-                    stream=stream_type,
-                    job=job,
-                )
-
-            elif log_policy == LogPolicy.LOG_TOTAL:
-                logger.debug("LOG_TOTAL :: %s :: %s",stream_type,line)
-                all_lines[stream_type].append(line)
-
-            elif log_policy == LogPolicy.LOG_NONE:
-                logger.debug("LOG_NONE :: %s :: %s",stream_type,line)
-                pass
-
-            else:
-                msg = 'Unexpected value for log_policy: {!r}'.format(log_policy)
-                raise ValueError(msg)
-
-
 class LogContainer(object):
     LogLine = collections.namedtuple('LogLine', [
         'now', 'output',
@@ -229,32 +193,3 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
             results.append(result)
 
     return results
-
-
-def start_client(job, username, password=None,
-    public_key_filename=os.path.expanduser('~/.ssh/id_rsa.pub')):
-    '''
-    This starts an
-    '''
-    client = SSHClient()
-    client.set_missing_host_key_policy(AutoAddPolicy())
-
-    server_hostname = job.server.hostname
-    server_port = job.server.port
-    try:
-        logger.info("Connecting to %s with public key.", server_hostname)
-        client.connect(server_hostname, port=server_port, username=username,
-            key_filename=public_key_filename)
-    except (AuthenticationException, BadHostKeyException):
-        try:
-            if password is None:
-                logger.error("Connection with public key failed! The password is mandatory")
-                return None
-            logger.info("Connecting to %s with password.", server_hostname)
-            client.connect(server_hostname, port=server_port, username=username,
-                password=password)
-            deploy_key_if_it_doesnt_exist(client, public_key_filename)
-        except AuthenticationException:
-            logger.error("Authenctication error! Wrong password...")
-            return None
-    return client
