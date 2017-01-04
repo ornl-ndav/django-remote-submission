@@ -1,0 +1,10 @@
+-r requirements.txt
+
+# For creating the documentation pages
+sphinx
+
+# For documenting Django applications
+django-sphinx-autodoc
+
+# For drawing ascii art diagrams
+sphinxcontrib-aafig

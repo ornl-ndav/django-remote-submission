@@ -98,6 +98,7 @@ loaddata: .loaddata.secondary
 	touch $@
 
 .migrate.secondary: server/settings.py .depend.secondary
+	rm -f server/db.sqlite3
 	$(PYTHON) manage.py makemigrations
 	$(PYTHON) manage.py migrate
 	touch $@

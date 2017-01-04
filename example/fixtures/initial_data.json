@@ -6,7 +6,10 @@
       "created": "2016-12-08T14:53:23.251Z",
       "modified": "2016-12-08T14:53:23.252Z",
       "name": "python",
-      "path": "/usr/bin/python -u"
+      "path": "/usr/bin/python",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -16,7 +19,10 @@
       "created": "2016-12-08T14:53:40.343Z",
       "modified": "2016-12-08T14:53:40.344Z",
       "name": "python2",
-      "path": "/usr/bin/python2 -u"
+      "path": "/usr/bin/python2",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -26,7 +32,10 @@
       "created": "2016-12-08T14:53:57.640Z",
       "modified": "2016-12-08T14:53:57.641Z",
       "name": "python2.7",
-      "path": "/usr/bin/python2.7 -u"
+      "path": "/usr/bin/python2.7",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -46,7 +55,10 @@
       "created": "2016-12-08T14:54:27.149Z",
       "modified": "2016-12-08T14:54:27.150Z",
       "name": "mantidpython",
-      "path": "/usr/bin/mantidpython38 -u"
+      "path": "/usr/bin/mantidpython38",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -56,7 +68,10 @@
       "created": "2016-12-08T14:54:42.718Z",
       "modified": "2016-12-08T14:54:42.719Z",
       "name": "mantidpython35",
-      "path": "/usr/bin/mantidpython35 -u"
+      "path": "/usr/bin/mantidpython35",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -66,7 +81,10 @@
       "created": "2016-12-08T14:55:07.879Z",
       "modified": "2016-12-08T14:55:07.880Z",
       "name": "mantidpython36",
-      "path": "/usr/bin/mantidpython36 -u"
+      "path": "/usr/bin/mantidpython36",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -76,7 +94,10 @@
       "created": "2016-12-08T14:55:25.634Z",
       "modified": "2016-12-08T14:55:25.635Z",
       "name": "mantidpython37",
-      "path": "/usr/bin/mantidpython37 -u"
+      "path": "/usr/bin/mantidpython37",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -86,7 +107,10 @@
       "created": "2016-12-08T14:55:42.837Z",
       "modified": "2016-12-08T14:55:42.838Z",
       "name": "mantidpython38",
-      "path": "/usr/bin/mantidpython38 -u"
+      "path": "/usr/bin/mantidpython38",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
@@ -96,7 +120,10 @@
       "created": "2016-12-08T15:01:18.062Z",
       "modified": "2016-12-08T15:01:18.064Z",
       "name": "python3",
-      "path": "/usr/bin/python3 -u"
+      "path": "/usr/bin/python3",
+      "arguments": [
+        "-u"
+      ]
     }
   },
   {
