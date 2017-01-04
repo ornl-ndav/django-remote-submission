@@ -9,6 +9,9 @@ mock>=1.0.1
 # Check style of code
 flake8>=2.1.0
 
+# Check for docstring conformance
+flake8_docstrings
+
 # Run tests for different Python versions
 tox>=1.7.0
 
