@@ -196,7 +196,7 @@ class LogContainer(object):
 
             del self._stdout[:]
 
-        if len(self.stderr) > 0:
+        if len(self._stderr) > 0:
             Log.objects.create(
                 time=self._stderr[-1].now,
                 content='\n'.join(line.output for line in self._stderr),
