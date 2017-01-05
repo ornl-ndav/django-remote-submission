@@ -4,7 +4,7 @@
 sphinx
 
 # Need the newest version
-docutils
+docutils==0.13.1
 
 # For documenting Django applications
 django-sphinx-autodoc
