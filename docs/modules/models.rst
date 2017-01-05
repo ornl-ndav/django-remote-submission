@@ -22,3 +22,5 @@ Models
 .. autoclass:: django_remote_submission.models.Log
    :members:
    :special-members:
+
+.. autofunction:: job_result_path

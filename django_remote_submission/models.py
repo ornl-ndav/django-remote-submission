@@ -38,13 +38,13 @@ from model_utils.models import TimeStampedModel
 
 
 # Thanks http://stackoverflow.com/a/7394475
-class ListField(models.TextField):
+class ListField(models.TextField):  # noqa: D101
     description = "Stores a python list"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # noqa: D102
         super(ListField, self).__init__(*args, **kwargs)
 
-    def to_python(self, value):
+    def to_python(self, value):  # noqa: D102
         if not value:
             value = []
 
@@ -53,16 +53,16 @@ class ListField(models.TextField):
 
         return ast.literal_eval(value)
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context):  # noqa: D102
         return self.to_python(value)
 
-    def get_prep_value(self, value):
+    def get_prep_value(self, value):  # noqa: D102
         if value is None:
             return value
 
         return str(value)
 
-    def value_to_string(self, obj):
+    def value_to_string(self, obj):  # noqa: D102
         value = self._get_val_from_obj(obj)
         return self.get_db_prep_value(value)
 
@@ -342,7 +342,13 @@ class Log(models.Model):
 
 
 def job_result_path(instance, filename):
-    """Produce the path to locally store the job results."""
+    """Produce the path to locally store the job results.
+
+    :param Result instance: the :class:`Result` instance to produce the path
+        for
+    :param str filename: the original filename
+
+    """
     return 'job_{}/{}'.format(instance.job.id, filename)
 
 

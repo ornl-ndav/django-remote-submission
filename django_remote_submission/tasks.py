@@ -1,3 +1,10 @@
+"""Submit a job to a remote server and handle logging.
+
+This module can be used either with Celery, in which case it will run in a
+background thread, or as a normal function call, in which case it will block
+the current execution thread.
+
+"""
 from __future__ import absolute_import, unicode_literals, print_function
 import os
 import sys
@@ -30,6 +37,7 @@ except ImportError:
                 'Tasks will not be implemented by Celery\'s queue.')
 
     def shared_task(func):
+        """Naive wrapper in case Celery does not exist."""
         def delay(*args, **kwargs):
             return func(*args, **kwargs)
 
@@ -127,7 +135,6 @@ class LogContainer(object):
         :param LogPolicy log_policy: the policy to use for logging
 
         """
-
         self.job = job
         """The job that these logs are coming from."""
 
@@ -223,8 +230,6 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
     :param list(str) store_results: the patterns to use for the results to store
 
     """
-
-
     job = Job.objects.get(pk=job_pk)
 
     if username is None:

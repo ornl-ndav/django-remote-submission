@@ -12,7 +12,10 @@ Welcome to django-remote-submission's documentation!
 
    modules/models
    modules/tasks
-
+   modules/remote
+   modules/serializers
+   modules/urls
+   modules/views
 
 Indices and tables
 ==================
