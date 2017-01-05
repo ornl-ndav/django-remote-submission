@@ -180,6 +180,8 @@ intersphinx_mapping = {
     'https://docs.python.org/': None,
 }
 
+autodoc_member_order = 'bysource'
+
 
 def process_docstring(app, what, name, obj, options, lines):
     import inspect

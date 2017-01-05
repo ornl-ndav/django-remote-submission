@@ -11,6 +11,7 @@ Welcome to django-remote-submission's documentation!
    :caption: Contents:
 
    modules/models
+   modules/tasks
 
 
 Indices and tables

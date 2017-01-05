@@ -38,12 +38,43 @@ except ImportError:
 
 
 class LogPolicy(object):
+    """Specify how logging should be done when running a job."""
+
     LOG_NONE = 0
+    """Don't log anything from the running job."""
+
     LOG_LIVE = 1
+    """Create Log objects immediately when they are received."""
+
     LOG_TOTAL = 2
+    """Combine all of stdout and stderr at the end of the job."""
 
 
 def is_matching(filename, patterns=None):
+    """Check if a filename matches the list of positive and negative patterns.
+
+    Positive patterns are strings like ``"1.txt"``, ``"[23].txt"``, or
+    ``"*.txt"``.
+
+    Negative patterns are strings like ``"!1.txt"``, ``"![23].txt"``, or
+    ``"!*.txt"``.
+
+    Each pattern is checked in turn, so the list of patterns ``["!*.txt",
+    "1.txt"]`` will still match ``"1.txt"``.
+
+    >>> from django_remote_submission.tasks import is_matching
+    >>> is_matching("1.txt", patterns=["1.txt"])
+    True
+    >>> is_matching("1.txt", patterns=["[12].txt"])
+    True
+    >>> is_matching("1.txt", patterns=["*.txt"])
+    True
+    >>> is_matching("1.txt", patterns=["1.txt", "!*.txt"])
+    False
+    >>> is_matching("1.txt", patterns=["!*.txt", "[12].txt"])
+    True
+
+    """
     if patterns is None:
         patterns = ['*']
 
@@ -61,17 +92,62 @@ def is_matching(filename, patterns=None):
 
 
 class LogContainer(object):
+    """Manage logs sent by a job according to the log policy.
+
+    .. testsetup::
+
+       from django_remote_submission.models import Job, Server, Interpreter
+       from django.contrib.auth import get_user_model
+       python3 = Interpreter(name='Python 3', path='/bin/python3', arguments=['-u'])
+       server = Server(title='Remote', hostname='foo.invalid', port=22)
+       user = get_user_model()(username='john')
+       job = Job(title='My Job', program='print("hello world")',
+           remote_directory='/tmp/', remote_filename='foobar.py',
+           owner=user, server=server, interpreter=python3,
+       )
+
+    >>> from django_remote_submission.tasks import LogContainer, LogPolicy
+    >>> from datetime import datetime
+    >>> now = datetime(year=2017, month=1, day=2, hour=3, minute=4, second=5)
+    >>> logs = LogContainer(job, LogPolicy.LOG_LIVE)
+    >>> logs.write_stdout(now, 'hello world')  # doctest: +SKIP
+    >>> Log.objects.get()  # doctest: +SKIP
+    <Log: 2017-01-02 03:04:05 My Job>
+
+    """
+
     LogLine = collections.namedtuple('LogLine', [
         'now', 'output',
     ])
 
     def __init__(self, job, log_policy):
-        self.job = job
-        self.log_policy = log_policy
-        self.stdout = []
-        self.stderr = []
+        """Instantiate a log container.
 
-    def write(self, lst, now, output):
+        :param models.Job job: the job these logs are coming from
+        :param LogPolicy log_policy: the policy to use for logging
+
+        """
+
+        self.job = job
+        """The job that these logs are coming from."""
+
+        self.log_policy = log_policy
+        """The policy to use when logging."""
+
+        self._stdout = []
+        """The list of log lines that came from stdout."""
+
+        self._stderr = []
+        """The list of log lines that came from stderr."""
+
+    def _write(self, lst, now, output):
+        """Append the current log entry to the given list and flush.
+
+        :param lst: either :attr:`stdout` or :attr:`stderr`
+        :param datetime.datetime now: the time this line was produced
+        :param str output: the line of output from the job
+
+        """
         if self.log_policy != LogPolicy.LOG_NONE:
             lst.append(LogContainer.LogLine(
                 now=now,
@@ -82,40 +158,73 @@ class LogContainer(object):
             self.flush()
 
     def write_stdout(self, now, output):
-        print('write_stdout(now={!r}, output={!r})'.format(now, output))
-        self.write(self.stdout, now, output)
+        """Write some output from a job's stdout stream.
+
+        :param datetime.datetime now: the time this output was produced
+        :param str output: the output that was produced
+
+        """
+        self._write(self._stdout, now, output)
 
     def write_stderr(self, now, output):
-        print('write_stderr(now={!r}, output={!r})'.format(now, output))
-        self.write(self.stderr, now, output)
+        """Write some output from a job's stderr stream.
+
+        :param datetime.datetime now: the time this output was produced
+        :param str output: the output that was produced
+
+        """
+        self._write(self._stderr, now, output)
 
     def flush(self):
-        print('flush: {!r} {!r}'.format(self.stdout, self.stderr))
+        """Flush the stdout and stderr lists to Django models.
 
-        if len(self.stdout) > 0:
+        If the :attr:`log_policy` is :const:`LogPolicy.LOG_TOTAL`, this method
+        will need to be called at the end of the job to ensure all the data
+        gets written out.
+
+        There is no penalty for calling this method multiple times, so it can
+        be called at the end of the job regardless of which log policy is used.
+
+        """
+        if len(self._stdout) > 0:
             Log.objects.create(
-                time=self.stdout[-1].now,
-                content='\n'.join(line.output for line in self.stdout),
+                time=self._stdout[-1].now,
+                content='\n'.join(line.output for line in self._stdout),
                 stream='stdout',
                 job=self.job,
             )
 
-            del self.stdout[:]
+            del self._stdout[:]
 
         if len(self.stderr) > 0:
             Log.objects.create(
-                time=self.stderr[-1].now,
-                content='\n'.join(line.output for line in self.stderr),
+                time=self._stderr[-1].now,
+                content='\n'.join(line.output for line in self._stderr),
                 stream='stderr',
                 job=self.job,
             )
 
-            del self.stderr[:]
+            del self._stderr[:]
 
 
 @shared_task
 def submit_job_to_server(job_pk, password, username=None, timeout=None,
                          log_policy=LogPolicy.LOG_LIVE, store_results=None):
+    """Submit a job to the remote server.
+
+    This can be used as a Celery task, if the library is installed and running.
+
+    :param int job_pk: the primary key of the :class:`models.Job` to submit
+    :param str password: the password of the user submitting the job
+    :param str username: the username of the user submitting, if it is
+        different from the owner of the job
+    :param datetime.timedelta timeout: the timeout for running the job
+    :param LogPolicy log_policy: the policy to use for logging
+    :param list(str) store_results: the patterns to use for the results to store
+
+    """
+
+
     job = Job.objects.get(pk=job_pk)
 
     if username is None:
