@@ -1,10 +1,6 @@
 """Provide the Django models for interfacing with the job submission tasks.
 
-.. aafig::
-    :aspect: 60
-    :scale: 150
-    :proportional:
-    :textual:
+.. code::
 
     +----------------+            +---------------+
     | "Server"       | +--+------>| "Interpreter" |

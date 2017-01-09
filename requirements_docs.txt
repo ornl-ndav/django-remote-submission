@@ -8,6 +8,3 @@ docutils==0.13.1
 
 # For documenting Django applications
 django-sphinx-autodoc
-
-# For drawing ascii art diagrams
-sphinxcontrib-aafig
