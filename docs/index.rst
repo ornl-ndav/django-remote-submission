@@ -10,12 +10,8 @@ Welcome to django-remote-submission's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   modules/models
-   modules/tasks
-   modules/remote
-   modules/serializers
-   modules/urls
-   modules/views
+   testing
+   modules
 
 Indices and tables
 ==================
