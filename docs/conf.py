@@ -96,7 +96,6 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
-    'sphinxcontrib.aafig',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
