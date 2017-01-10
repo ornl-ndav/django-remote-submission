@@ -481,9 +481,6 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     import os.path
     import time
 
-    if wrapper_cls.__name__ == 'LocalWrapper':
-        pytest.skip()
-
     try:
         from shlex import quote as cmd_quote
     except ImportError:
@@ -514,8 +511,6 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     submit_job_to_server(remove_existing_key_job.pk, env.remote_password,
                          wrapper_cls=wrapper_cls)
 
-    time.sleep(5)
-
     add_key_job = job_gen(
         program='''\
         true
@@ -526,8 +521,6 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     submit_job_to_server(add_key_job.pk, env.remote_password,
                          wrapper_cls=wrapper_cls)
 
-    time.sleep(5)
-
     simple_job = job_gen(
         program='''\
         true
@@ -536,5 +529,3 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     )
 
     submit_job_to_server(simple_job.pk, None, wrapper_cls=wrapper_cls)
-
-    time.sleep(5)
