@@ -133,7 +133,7 @@ def job_model_saved(mocker):
 
 
 @pytest.fixture(params=[True, False])
-def wrappers(request, monkeypatch):
+def wrapper_cls(request):
     from django_remote_submission.remote import RemoteWrapper
     import os
     import os.path
@@ -211,10 +211,11 @@ def wrappers(request, monkeypatch):
             return process.returncode == 0
 
     if request.param:
-        monkeypatch.setattr('django_remote_submission.remote.RemoteWrapper',
-                            LocalWrapper)
+        return LocalWrapper
     elif pytest.config.getoption('--ci'):
         pytest.skip('running on continuous integration')
+    else:
+        return RemoteWrapper
 
 
 @pytest.mark.django_db
@@ -225,12 +226,12 @@ for i in range(5):
     print("line: {}".format(i))
     time.sleep(0.1)
 ''')
-def test_submit_job_normal_usage(env, job, job_model_saved, wrappers):
+def test_submit_job_normal_usage(env, job, job_model_saved, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
     import datetime
 
-    submit_job_to_server(job.pk, env.remote_password)
+    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls)
 
     assert Log.objects.count() == 5
 
@@ -258,12 +259,12 @@ for i in range(5):
     print("line: {}".format(i), file=sys.stdout if i % 2 == 0 else sys.stderr)
     time.sleep(0.1)
 ''')
-def test_submit_job_multiple_streams(env, job, wrappers):
+def test_submit_job_multiple_streams(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
     import datetime
 
-    submit_job_to_server(job.pk, env.remote_password)
+    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls)
 
     assert Log.objects.count() == 5
 
@@ -286,11 +287,11 @@ def test_submit_job_multiple_streams(env, job, wrappers):
 import sys
 sys.exit(1)
 ''')
-def test_submit_job_failure(env, job, wrappers):
+def test_submit_job_failure(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
 
-    submit_job_to_server(job.pk, env.remote_password)
+    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls)
 
     job = Job.objects.get(pk=job.pk)
     assert job.status == Job.STATUS.failure
@@ -305,11 +306,11 @@ for i in range(5):
     print('line: {}'.format(i), file=sys.stdout)
     time.sleep(0.1)
 ''')
-def test_submit_job_log_policy_log_total(env, job, wrappers):
+def test_submit_job_log_policy_log_total(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
-    submit_job_to_server(job.pk, env.remote_password,
+    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls,
                          log_policy=LogPolicy.LOG_TOTAL)
 
     assert Log.objects.count() == 1
@@ -327,11 +328,11 @@ for i in range(5):
     print('line: {}'.format(i), file=sys.stdout)
     time.sleep(0.1)
 ''')
-def test_submit_job_log_policy_log_none(env, job, wrappers):
+def test_submit_job_log_policy_log_none(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
-    submit_job_to_server(job.pk, env.remote_password,
+    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls,
                          log_policy=LogPolicy.LOG_NONE)
 
     assert Log.objects.count() == 0
@@ -346,12 +347,13 @@ for i in range(5):
     print('line: {}'.format(i))
     time.sleep(0.35)
 ''')
-def test_submit_job_timeout(env, job, wrappers):
+def test_submit_job_timeout(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import datetime
 
     results = submit_job_to_server(job.pk, env.remote_password,
+                                   wrapper_cls=wrapper_cls,
                                    timeout=datetime.timedelta(seconds=1))
 
     assert Log.objects.count() == 3
@@ -370,11 +372,12 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files(env, job, wrappers):
+def test_submit_job_modified_files(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
-    results = submit_job_to_server(job.pk, env.remote_password)
+    results = submit_job_to_server(job.pk, env.remote_password,
+                                   wrapper_cls=wrapper_cls)
 
     assert len(results) == 5
     assert [x.remote_filename for x in results] == \
@@ -395,11 +398,12 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files_positive_pattern(env, job, wrappers):
+def test_submit_job_modified_files_positive_pattern(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
     results = submit_job_to_server(job.pk, env.remote_password,
+                                   wrapper_cls=wrapper_cls,
                                    store_results=['0.txt', '[12].txt'])
 
     assert len(results) == 3
@@ -421,11 +425,12 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files_negative_pattern(env, job, wrappers):
+def test_submit_job_modified_files_negative_pattern(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
     results = submit_job_to_server(job.pk, env.remote_password,
+                                   wrapper_cls=wrapper_cls,
                                    store_results=['*', '![34].txt'])
 
     assert len(results) == 3

@@ -168,9 +168,7 @@ class RemoteWrapper(object):
 
     def _start_client(self, password, public_key_filename):
         if public_key_filename is None:
-            public_key_filename = os.path.expanduse
-
-        r('~/.ssh/id_rsa.pub')
+            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
 
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy())
@@ -236,7 +234,7 @@ def deploy_key_if_it_doesnt_exist(client, public_key_filename):
         printf $'%s\n' "$KEY" >> ~/.ssh/authorized_keys
         echo key added.
     fi
-    '''.format(shlex.quote(key)))
+    '''.format(cmd_quote(key)))
 
     stdin, stdout, stderr = client.exec_command(command)
     logger.debug(stdout.readlines())
