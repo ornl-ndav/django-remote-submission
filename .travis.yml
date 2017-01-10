@@ -13,6 +13,7 @@ python:
 before_install:
   - pip install --upgrade codecov
   - mv .env.travis .env
+  - ssh-keygen -q -t rsa -b 4096 -f ~/.ssh/id_rsa -N '' -C django_remote_submission
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install --upgrade -r requirements_test.txt
