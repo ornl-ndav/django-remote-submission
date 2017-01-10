@@ -30,6 +30,9 @@ clean-pyc: ## remove Python file artifacts
 lint: ## check style with flake8
 	flake8 django_remote_submission tests
 
+doclint: ## check documentation style with flake8
+	flake8 --select=D --ignore=F django_remote_submission
+
 test: ## run tests quickly with the default Python
 	pytest
 
@@ -42,12 +45,17 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	open htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/django-remote-submission.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ django_remote_submission
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
+docs/.venv.secondary:
+	python2.7 -m virtualenv docs/venv && \
+	source docs/venv/bin/activate && \
+	python2.7 -m pip install -r requirements_docs.txt
+	touch $@
+
+docs: docs/.venv.secondary  ## generate Sphinx HTML documentation, including API docs
+	source docs/venv/bin/activate && \
+	$(MAKE) -C docs clean && \
+	$(MAKE) -C docs doctest && \
+	$(MAKE) -C docs html && \
 	$(BROWSER) docs/_build/html/index.html
 
 release: clean ## package and upload a release

@@ -1,4 +1,8 @@
-"""
+"""Provides a wrapper around Paramiko to simplify the API.
+
+This module is meant to be a general wrapper so that a ``LocalWrapper`` can
+also be created to run tests in continuous integration services where SSH is
+not available.
 
 """
 
@@ -23,35 +27,59 @@ import six
 logger = logging.getLogger(__name__)
 
 
-class LogPolicy(object):
-    LOG_NONE = 0
-    LOG_LIVE = 1
-    LOG_TOTAL = 2
-
-
 class RemoteWrapper(object):
-    """
+    """Wrapper around Paramiko which simplifies the remote connection API.
+
+    The goal with this class is to also be able to provide a ``LocalWrapper``
+    which works with the local file system, so that tests can be run on
+    continuous integration servers.
 
     """
+
     def __init__(self, hostname, username, port=22):
+        """Initialize the wrapper.
+
+        :param str hostname: the hostname of the server to connect to
+        :param str username: the username of the user on the remote server
+        :param int port: the SSH port to connect to
+
+        """
         self.hostname = hostname
         self.username = username
         self.port = port
+
         self._client = None
+        """The Paramiko Client instance"""
+
         self._sftp = None
+        """The Paramiko SFTP instance"""
 
     def __enter__(self):
+        """Allow the use of ``with wrapper:``."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Allow the use of ``with wrapper:``."""
         self.close()
 
     def connect(self, password=None, public_key_filename=None):
+        """Connect to the remote host with the given password and public key.
+
+        Meant to be used like::
+
+            with wrapper.connect(password='password0'):
+                pass
+
+        :param str password: the password of the user on the remote server
+        :param str public_key_filename: the file containing the public key
+
+        """
         self._client = self._start_client(password, public_key_filename)
         self._sftp = self._client.open_sftp()
         return self
 
     def close(self):
+        """Close any open connections and clear their attributes."""
         self._sftp.close()
         self._sftp = None
 
@@ -59,16 +87,57 @@ class RemoteWrapper(object):
         self._client = None
 
     def chdir(self, remote_directory):
+        """Change directories to the remote directory.
+
+        :param str remote_directory: the directory to change to
+
+        """
         self._sftp.chdir(remote_directory)
 
     def open(self, filename, mode):
+        """Open a file from the last used remote directory.
+
+        :param str filename: the name of the file to open
+        :param str mode: the mode to use to open the file (see :func:`file`'s
+            documentation for more information)
+
+        """
         return self._sftp.open(filename, mode)
 
     def listdir_attr(self):
+        """Retrieve a list of files and their attributes.
+
+        Each object is guaranteed to have a ``filename`` attribute as well as
+        an ``st_mtime`` attribute, which gives the last modified time in
+        seconds.
+
+        """
         return self._sftp.listdir_attr()
 
     def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
                      stderr_handler=None):
+        """Execute a command on the remote server.
+
+        An example of how to use this function::
+
+            from datetime import timedelta
+            wrapper.exec_command(
+                args=["ls", "-la", "."],
+                workdir="/",
+                timeout=timedelta(minute=5),
+                stdout_handler=lambda now, output: print('stdout, now, output),
+                stderr_handler=lambda now, output: print('stderr, now, output),
+            )
+
+        :param list(str) args: the command and arguments to run
+        :param str workdir: the directory to run the commands from
+        :param datetime.timedelta timeout: the timeout to use for the command
+        :param stdout_handler: a function that accepts ``now`` and ``output``
+            parameters and is called when new output appears on stdout.
+        :param stderr_handler: a function that accepts ``now`` and ``output``
+            parameters and is called when new output appears on stderr.
+
+        """
         chdir = self._make_command(['cd', workdir], None)
         run = self._make_command(args, timeout)
         command = '{} && {}'.format(chdir, run)
@@ -81,31 +150,27 @@ class RemoteWrapper(object):
         while True:
             current_time = now()
             if channel.recv_ready():
-                print('channel.recv_ready()')
                 output = channel.recv(1024).decode('utf-8')
                 stdout_handler(current_time, output)
 
             if channel.recv_stderr_ready():
-                print('channel.recv_stderr_ready()')
                 output = channel.recv_stderr(1024).decode('utf-8')
                 stderr_handler(current_time, output)
 
             if channel.exit_status_ready():
-                print('channel.exit_status_ready()')
                 if channel.recv_ready() or channel.recv_stderr_ready():
-                    print('try again')
                     continue
 
                 if channel.recv_exit_status() == 0:
-                    print('return True')
                     return True
                 else:
-                    print('return False')
                     return False
 
     def _start_client(self, password, public_key_filename):
         if public_key_filename is None:
-            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+            public_key_filename = os.path.expanduse
+
+        r('~/.ssh/id_rsa.pub')
 
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy())
@@ -154,7 +219,10 @@ class RemoteWrapper(object):
 
 
 def deploy_key_if_it_doesnt_exist(client, public_key_filename):
-    """
+    """Deploy our public key to the remote server.
+
+    :param paramiko.client.SSHClient client: an existing Paramiko client
+    :param str public_key_filename: the name of the file with the public key
 
     """
     with open(public_key_filename, 'rt', encoding='utf-8') as f:

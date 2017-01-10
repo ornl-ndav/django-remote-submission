@@ -1,19 +1,22 @@
-.. complexity documentation master file, created by
-   sphinx-quickstart on Tue Jul  9 22:26:36 2013.
+.. django-remote-submission documentation master file, created by
+   sphinx-quickstart on Wed Jan  4 13:53:46 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Django Remote Submission's documentation!
-=================================================================
-
-Contents:
+Welcome to django-remote-submission's documentation!
+====================================================
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
-   readme
-   installation
-   usage
-   contributing
-   authors
-   history
+   testing
+   howto
+   modules
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

@@ -1,0 +1,10 @@
+-r requirements.txt
+
+# For creating the documentation pages
+sphinx
+
+# Need the newest version
+docutils==0.13.1
+
+# For documenting Django applications
+django-sphinx-autodoc

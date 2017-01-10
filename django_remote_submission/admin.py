@@ -1,3 +1,5 @@
+"""Provide an admin interface for managing jobs."""
+
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 from django import forms
@@ -10,18 +12,54 @@ from .tasks import submit_job_to_server
 
 @admin.register(Interpreter)
 class InterpreterAdmin(admin.ModelAdmin):
+    """Manage interpreters with default admin interface."""
+
     pass
+
 
 @admin.register(Server)
 class ServerAdmin(admin.ModelAdmin):
+    """Manage servers and allow selecting interpreters from available ones."""
+
     filter_horizontal = ('interpreters',)
 
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
+    """Manage jobs with ability to submit the job from the interface.
+
+    To submit a job:
+
+    1. Make sure it is created and has all the correct fields, including the
+    program, server, and interpreter.
+
+    2. Go back to the main job index.
+
+    3. Select the job.
+
+    4. Select "Submit to server" from the actions list.
+
+    5. Put in the username of the person to execute the job (or blank if it's
+    the same as the owner's Django username).
+
+    6. Put in the password of the user to execute the job.
+
+    7. Click "Submit to Server".
+
+    """
+
     actions = ['submit_to_server']
 
     class RequestPasswordForm(forms.Form):
+        """Provide a form to put in the username and password of job's owner.
+
+        The hidden inputs are requried to work with the action list in the
+        admin interface. These were hard to find because having a second page
+        for actions in Django isn't very well documented, and information is
+        spread through a handful of blog posts.
+
+        """
+
         _selected_action = forms.CharField(
             widget=forms.MultipleHiddenInput,
             required=False,
@@ -39,6 +77,7 @@ class JobAdmin(admin.ModelAdmin):
         password = forms.CharField(widget=forms.PasswordInput)
 
     def submit_to_server(self, request, queryset):
+        """Submit job to server via an admin interface action."""
         form = None
 
         if 'apply' in request.POST:
@@ -69,6 +108,8 @@ class JobAdmin(admin.ModelAdmin):
                 return HttpResponseRedirect(request.get_full_path())
 
         if not form:
+            # This part is required to make the intermediate page work with the
+            # Django actions.
             selected_action = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
             index = int(request.POST.get('index', 0))
             form = JobAdmin.RequestPasswordForm(initial={
@@ -89,4 +130,6 @@ class JobAdmin(admin.ModelAdmin):
 
 @admin.register(Log)
 class LogAdmin(admin.ModelAdmin):
+    """Manage logs with the default admin interface."""
+
     pass
