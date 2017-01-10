@@ -133,7 +133,7 @@ def job_model_saved(mocker):
 
 
 @pytest.fixture(params=[True, False])
-def wrapper_cls(request, monkeypatch):
+def wrapper_cls(request):
     from django_remote_submission.remote import RemoteWrapper
     import os
     import os.path
