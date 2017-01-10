@@ -88,6 +88,20 @@ def interpreter(env):
 
 
 @pytest.fixture
+def interpreter_gen(env):
+    from django_remote_submission.models import Interpreter
+
+    def gen(name, path, arguments):
+        return Interpreter.objects.create(
+            name=name,
+            path=path,
+            arguments=arguments,
+        )
+
+    return gen
+
+
+@pytest.fixture
 def server(env, interpreter):
     from django_remote_submission.models import Server
 
@@ -117,6 +131,24 @@ def job(request, env, server, user, interpreter):
         owner=user,
         interpreter=interpreter,
     )
+
+
+@pytest.fixture
+def job_gen(request, env, server, user):
+    from django_remote_submission.models import Job
+
+    def gen(program, interpreter):
+        return Job.objects.create(
+            title='1-job-title',
+            program=textwrap.dedent(program),
+            remote_directory=env.remote_directory,
+            remote_filename=env.remote_filename,
+            server=server,
+            owner=user,
+            interpreter=interpreter,
+        )
+
+    return gen
 
 
 @pytest.fixture
@@ -440,3 +472,69 @@ def test_submit_job_modified_files_negative_pattern(env, job, wrapper_cls):
     for i, result in enumerate(results):
         assert result.local_file.read().decode('utf-8') == \
             'line: {}\n'.format(i)
+
+
+@pytest.mark.django_db
+def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+    import os.path
+    import time
+
+    if wrapper_cls.__name__ == 'LocalWrapper':
+        pytest.skip()
+
+    try:
+        from shlex import quote as cmd_quote
+    except ImportError:
+        from pipes import quote as cmd_quote
+
+    sh = interpreter_gen(
+        name='sh',
+        path='/usr/bin/env',
+        arguments=['sh'],
+    )
+
+    python = interpreter_gen(
+        name='Python',
+        path='/usr/bin/env',
+        arguments=['python', '-u'],
+    )
+
+    with open(os.path.expanduser('~/.ssh/id_rsa.pub'), 'rt') as f:
+        key = f.read().strip()
+
+    remove_existing_key_job = job_gen(
+        program='''\
+        sed -i.bak -e /{key}/d ~/.ssh/authorized_keys
+        '''.format(key=cmd_quote(key.replace('/', '\/'))),
+        interpreter=sh,
+    )
+
+    submit_job_to_server(remove_existing_key_job.pk, env.remote_password,
+                         wrapper_cls=wrapper_cls)
+
+    time.sleep(5)
+
+    add_key_job = job_gen(
+        program='''\
+        true
+        ''',
+        interpreter=sh,
+    )
+
+    submit_job_to_server(add_key_job.pk, env.remote_password,
+                         wrapper_cls=wrapper_cls)
+
+    time.sleep(5)
+
+    simple_job = job_gen(
+        program='''\
+        true
+        ''',
+        interpreter=sh,
+    )
+
+    submit_job_to_server(simple_job.pk, None, wrapper_cls=wrapper_cls)
+
+    time.sleep(5)
