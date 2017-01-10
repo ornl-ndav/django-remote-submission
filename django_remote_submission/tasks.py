@@ -216,7 +216,8 @@ class LogContainer(object):
 
 @shared_task
 def submit_job_to_server(job_pk, password, username=None, timeout=None,
-                         log_policy=LogPolicy.LOG_LIVE, store_results=None):
+                         log_policy=LogPolicy.LOG_LIVE, store_results=None,
+                         wrapper_cls=RemoteWrapper):
     """Submit a job to the remote server.
 
     This can be used as a Celery task, if the library is installed and running.
@@ -228,6 +229,7 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
     :param datetime.timedelta timeout: the timeout for running the job
     :param LogPolicy log_policy: the policy to use for logging
     :param list(str) store_results: the patterns to use for the results to store
+    :param class wrapper_cls: the class constructor to connect to a remote host
 
     """
     job = Job.objects.get(pk=job_pk)
@@ -235,7 +237,7 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
     if username is None:
         username = job.owner.username
 
-    wrapper = RemoteWrapper(
+    wrapper = wrapper_cls(
         hostname=job.server.hostname,
         username=username,
         port=job.server.port,
@@ -305,5 +307,7 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
                 result.local_file.save(attr.filename, File(f), save=True)
 
             results.append(result)
+
+    results.sort(key=lambda x: x.remote_filename)
 
     return results
