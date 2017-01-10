@@ -20,6 +20,8 @@ run these commands
   $ source venv/bin/activate
   (venv)$ python3 -m pip install -r requirements_test.txt
 
+.. _modify-settings-for-testing:
+
 Modify Settings
 ------
 
