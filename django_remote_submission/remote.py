@@ -223,7 +223,7 @@ def deploy_key_if_it_doesnt_exist(client, public_key_filename):
     :param str public_key_filename: the name of the file with the public key
 
     """
-    with open(public_key_filename, 'rt', encoding='utf-8') as f:
+    with open(public_key_filename, 'rt') as f:
         key = f.read()
 
     client.exec_command('mkdir -p ~/.ssh/')
@@ -234,7 +234,7 @@ def deploy_key_if_it_doesnt_exist(client, public_key_filename):
         printf $'%s\n' "$KEY" >> ~/.ssh/authorized_keys
         echo key added.
     fi
-    '''.format(cmd_quote(key)))
+    '''.format(cmd_quote(key.strip('\n'))))
 
     stdin, stdout, stderr = client.exec_command(command)
     logger.debug(stdout.readlines())
