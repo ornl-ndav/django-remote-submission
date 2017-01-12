@@ -347,7 +347,7 @@ def test_submit_job_log_policy_log_total(env, job, wrapper_cls):
 
     assert Log.objects.count() == 1
     log = Log.objects.get()
-    assert log.content == '\n'.join('line: {}\n'.format(i) for i in range(5))
+    assert log.content == ''.join('line: {}\n'.format(i) for i in range(5))
     assert log.stream == 'stdout'
 
 
