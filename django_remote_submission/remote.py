@@ -227,6 +227,7 @@ def deploy_key_if_it_doesnt_exist(client, public_key_filename):
         key = f.read()
 
     client.exec_command('mkdir -p ~/.ssh/')
+    client.exec_command('chmod 700 ~/.ssh/')
 
     command = textwrap.dedent('''\
     KEY={}
@@ -241,4 +242,3 @@ def deploy_key_if_it_doesnt_exist(client, public_key_filename):
     logger.debug(stderr.readlines())
 
     client.exec_command('chmod 644 ~/.ssh/authorized_keys')
-    client.exec_command('chmod 700 ~/.ssh/')
