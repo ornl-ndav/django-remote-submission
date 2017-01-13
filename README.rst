@@ -120,11 +120,36 @@ Launch Django::
     PYTHONPATH=../ ./manage.py loaddata fixtures/initial_data.json
     PYTHONPATH=../ ./manage.py runserver
 
-Open in browser::
+Open in the browser::
 
     http://localhost:8000/admin/
     http://localhost:8000/
 
+=============================
+Useful notes
+=============================
+
+When integrating this in django it might be usefull:
+
+Add to settings::
+
+	CELERY_ACCEPT_CONTENT = ['pickle']
+	CELERY_EVENT_SERIALIZER = 'pickle'
+	CELERY_TASK_SERIALIZER = 'pickle'  
+	CELERY_RESULT_SERIALIZER = 'pickle'
+
+if using the app ``'django_celery_results``. Otherwise Result is not serialized.
+
+The Results files are stored in MEDIA. So add to your setings something similar to::
+
+	MEDIA_URL = '/media/'
+	MEDIA_ROOT = '../dist/media'
+
+To make media available in DEBUG mode, you might want to add to the main ``urls.py``::
+
+	if settings.DEBUG:
+	    # Serving files uploaded by a user during development
+	    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
 Credits
