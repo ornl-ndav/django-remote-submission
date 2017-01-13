@@ -7,13 +7,18 @@ from django.utils.translation import ungettext_lazy as _
 from django.shortcuts import render
 from django.http.response import HttpResponseRedirect
 
-from .models import Server, Job, Log, Interpreter
+from .models import Server, Job, Log, Interpreter, Result
 from .tasks import submit_job_to_server
 
 @admin.register(Interpreter)
 class InterpreterAdmin(admin.ModelAdmin):
     """Manage interpreters with default admin interface."""
+    pass
 
+
+@admin.register(Result)
+class ResultAdmin(admin.ModelAdmin):
+    """Manage Results with default admin interface."""
     pass
 
 
