@@ -196,7 +196,7 @@ class LogContainer(object):
         if len(self._stdout) > 0:
             Log.objects.create(
                 time=self._stdout[-1].now,
-                content='\n'.join(line.output for line in self._stdout),
+                content=''.join(line.output for line in self._stdout),
                 stream='stdout',
                 job=self.job,
             )
@@ -206,7 +206,7 @@ class LogContainer(object):
         if len(self._stderr) > 0:
             Log.objects.create(
                 time=self._stderr[-1].now,
-                content='\n'.join(line.output for line in self._stderr),
+                content=''.join(line.output for line in self._stderr),
                 stream='stderr',
                 job=self.job,
             )
