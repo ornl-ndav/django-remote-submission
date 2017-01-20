@@ -58,3 +58,23 @@ When you run the tests, you find that every test has an ``s`` for "skipped".
 When this occurs, it's because the ``.env`` file has not been configured. To
 fix this, you will need to follow the instructions in
 :ref:`modify-settings-for-testing`.
+
+
+Make changes to the models
+--------------------------
+
+In order to make changes to the models, we also need to have a Django
+application that can make the migrations. In order to do this, we should make
+sure that we've set up the virtual environment in the ``example`` folder and
+then run ``make makemigrations`` from the root of the project.
+
+.. code:: console
+
+   (venv)$ deactivate  # if you're still in the previous virtual environment
+   $ cd example
+   $ python3 -m virtualenv venv
+   $ source venv/bin/activate
+   (venv)$ python3 -m pip install -r requirements.txt
+   (venv)$ deactivate
+   $ cd ..
+   $ make makemigrations

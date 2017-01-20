@@ -21,6 +21,7 @@
 """
 # -*- coding: utf-8 -*-
 import ast
+import uuid
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -191,6 +192,13 @@ class Job(TimeStampedModel):
         max_length=250,
     )
 
+    uuid = models.UUIDField(
+        _('Job UUID'),
+        help_text=_('A unique identifier for use in grouping Result files'),
+        default=uuid.uuid4,
+        editable=False,
+    )
+
     program = models.TextField(
         _('Job Program'),
         help_text=_('The actual program to run (starting with a #!)'),
@@ -345,7 +353,7 @@ def job_result_path(instance, filename):
     :param str filename: the original filename
 
     """
-    return 'job_{}/{}'.format(instance.job.id, filename)
+    return 'results/{}/{}'.format(instance.job.uuid, filename)
 
 
 @python_2_unicode_compatible
