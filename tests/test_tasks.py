@@ -407,6 +407,7 @@ for i in range(5):
 def test_submit_job_modified_files(env, job, wrapper_cls):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+    import re
 
     results = submit_job_to_server(job.pk, env.remote_password,
                                    wrapper_cls=wrapper_cls)
@@ -418,6 +419,12 @@ def test_submit_job_modified_files(env, job, wrapper_cls):
     for i, result in enumerate(results):
         assert result.local_file.read().decode('utf-8') == \
             'line: {}\n'.format(i)
+
+    matcher = re.compile(
+        r'results/{}/[0-4].txt'.format(job.uuid)
+    )
+
+    assert matcher.match(result.local_file.name) is not None
 
 
 @pytest.mark.django_db
