@@ -27,6 +27,7 @@ def pytest_configure():
         ],
         SITE_ID=1,
         MIDDLEWARE_CLASSES=(),
+        MEDIA_ROOT='media',
         LOGGING = {
             'version': 1,
             'disable_existing_loggers': False,
