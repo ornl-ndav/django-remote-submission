@@ -1,4 +1,5 @@
 .PHONY: clean-pyc clean-build docs help
+SHELL := bash
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -35,6 +36,9 @@ doclint: ## check documentation style with flake8
 
 test: ## run tests quickly with the default Python
 	pytest
+
+test-ci:  ## run tests without using the remote host
+	pytest --ci
 
 test-all: ## run tests on every Python version with tox
 	tox
