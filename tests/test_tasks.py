@@ -265,6 +265,9 @@ def test_submit_job_normal_usage(env, job, job_model_saved, wrapper_cls):
 
     submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls)
 
+    job = Job.objects.get(pk=job.pk)
+    assert job.status == Job.STATUS.success
+
     assert Log.objects.count() == 5
 
     min_delta = datetime.timedelta(seconds=0.05)
@@ -277,9 +280,6 @@ def test_submit_job_normal_usage(env, job, job_model_saved, wrapper_cls):
         assert log.content == 'line: {}\n'.format(i)
 
     assert job_model_saved.call_count == 2
-
-    job = Job.objects.get(pk=job.pk)
-    assert job.status == Job.STATUS.success
 
 
 @pytest.mark.django_db
