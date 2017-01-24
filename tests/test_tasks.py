@@ -536,3 +536,24 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     )
 
     submit_job_to_server(simple_job.pk, None, wrapper_cls=wrapper_cls)
+
+
+@pytest.mark.django_db
+def test_delete_key(env):
+    from django_remote_submission.remote import RemoteWrapper
+
+    if pytest.config.getoption('--ci'):
+        pytest.skip('does not work in CI environments')
+
+    wrapper = RemoteWrapper(
+        hostname=env.server_hostname,
+        username=env.remote_user,
+        port=env.server_port,
+    )
+
+    with wrapper.connect(password=env.remote_password):
+        wrapper.delete_key()
+
+    with pytest.raises(ValueError, message='needs password'):
+        with wrapper.connect(password=None):
+            pass

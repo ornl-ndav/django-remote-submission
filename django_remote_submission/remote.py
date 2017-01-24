@@ -74,6 +74,10 @@ class RemoteWrapper(object):
         :param str public_key_filename: the file containing the public key
 
         """
+        if public_key_filename is None:
+            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+
+        self._public_key_filename = public_key_filename
         self._client = self._start_client(password, public_key_filename)
         self._sftp = self._client.open_sftp()
         return self
@@ -114,6 +118,37 @@ class RemoteWrapper(object):
         """
         return self._sftp.listdir_attr()
 
+    def delete_key(self):
+        """Delete the server's public key from remote host.
+
+        For example::
+
+            wrapper = RemoteWrapper(hostname, username)
+            with wrapper.connect(password, public_key_filename):
+                wrapper.delete_key()
+
+        """
+        if self._client is None:
+            raise ValueError('Wrapper must be connected before delete_key is called')
+
+        with open(self._public_key_filename, 'rt') as f:
+            key = f.read().strip()
+
+        self.chdir('/tmp')
+        with self.open('django-remote-submission-delete-key.bash', 'wt') as f:
+            program = textwrap.dedent('''\
+            sed -i.bak -e /{key}/d $HOME/.ssh/authorized_keys
+            '''.format(key=cmd_quote(key.replace('/', '\/'))))
+
+            f.write(program)
+
+        args = [
+            'bash', '/tmp/django-remote-submission-delete-key.bash',
+        ]
+
+        self.exec_command(args, '/')
+
+
     def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
                      stderr_handler=None):
         """Execute a command on the remote server.
@@ -151,11 +186,13 @@ class RemoteWrapper(object):
             current_time = now()
             if channel.recv_ready():
                 output = channel.recv(1024).decode('utf-8')
-                stdout_handler(current_time, output)
+                if stdout_handler is not None:
+                    stdout_handler(current_time, output)
 
             if channel.recv_stderr_ready():
                 output = channel.recv_stderr(1024).decode('utf-8')
-                stderr_handler(current_time, output)
+                if stderr_handler is not None:
+                    stderr_handler(current_time, output)
 
             if channel.exit_status_ready():
                 if channel.recv_ready() or channel.recv_stderr_ready():
@@ -167,9 +204,6 @@ class RemoteWrapper(object):
                     return False
 
     def _start_client(self, password, public_key_filename):
-        if public_key_filename is None:
-            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
-
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy())
 
