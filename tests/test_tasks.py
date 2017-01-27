@@ -384,9 +384,9 @@ def test_submit_job_timeout(env, job, wrapper_cls):
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import datetime
 
-    results = submit_job_to_server(job.pk, env.remote_password,
-                                   wrapper_cls=wrapper_cls,
-                                   timeout=datetime.timedelta(seconds=1))
+    submit_job_to_server(job.pk, env.remote_password,
+                         wrapper_cls=wrapper_cls,
+                         timeout=datetime.timedelta(seconds=1))
 
     assert Log.objects.count() == 3
 
@@ -405,7 +405,7 @@ for i in range(5):
     time.sleep(0.1)
 ''')
 def test_submit_job_modified_files(env, job, wrapper_cls):
-    from django_remote_submission.models import Job, Log
+    from django_remote_submission.models import Job, Log, Result
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import re
 
@@ -413,10 +413,13 @@ def test_submit_job_modified_files(env, job, wrapper_cls):
                                    wrapper_cls=wrapper_cls)
 
     assert len(results) == 5
-    assert [x.remote_filename for x in results] == \
+    assert sorted(results.keys()) == \
         ['0.txt', '1.txt', '2.txt', '3.txt', '4.txt']
 
-    for i, result in enumerate(results):
+    for (result_fname, result_pk) in results.items():
+        result = Result.objects.get(pk=result_pk)
+        i = int(re.match(r'^([0-9])\.txt', result_fname).group(1))
+
         assert result.local_file.read().decode('utf-8') == \
             'line: {}\n'.format(i)
 
@@ -438,18 +441,22 @@ for i in range(5):
     time.sleep(0.1)
 ''')
 def test_submit_job_modified_files_positive_pattern(env, job, wrapper_cls):
-    from django_remote_submission.models import Job, Log
+    from django_remote_submission.models import Job, Log, Result
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+    import re
 
     results = submit_job_to_server(job.pk, env.remote_password,
                                    wrapper_cls=wrapper_cls,
                                    store_results=['0.txt', '[12].txt'])
 
     assert len(results) == 3
-    assert [x.remote_filename for x in results] == \
+    assert sorted(results.keys()) == \
         ['0.txt', '1.txt', '2.txt']
 
-    for i, result in enumerate(results):
+    for (result_fname, result_pk) in results.items():
+        result = Result.objects.get(pk=result_pk)
+        i = int(re.match(r'^([0-9])\.txt', result_fname).group(1))
+
         assert result.local_file.read().decode('utf-8') == \
             'line: {}\n'.format(i)
 
@@ -465,18 +472,22 @@ for i in range(5):
     time.sleep(0.1)
 ''')
 def test_submit_job_modified_files_negative_pattern(env, job, wrapper_cls):
-    from django_remote_submission.models import Job, Log
+    from django_remote_submission.models import Job, Log, Result
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
+    import re
 
     results = submit_job_to_server(job.pk, env.remote_password,
                                    wrapper_cls=wrapper_cls,
                                    store_results=['*', '![34].txt'])
 
     assert len(results) == 3
-    assert [x.remote_filename for x in results] == \
+    assert sorted(results.keys()) == \
         ['0.txt', '1.txt', '2.txt']
 
-    for i, result in enumerate(results):
+    for (result_fname, result_pk) in results.items():
+        result = Result.objects.get(pk=result_pk)
+        i = int(re.match(r'^([0-9])\.txt', result_fname).group(1))
+
         assert result.local_file.read().decode('utf-8') == \
             'line: {}\n'.format(i)
 
