@@ -11,6 +11,7 @@ import logging
 import os
 import textwrap
 import datetime
+import uuid
 
 try:
     from shlex import quote as cmd_quote
@@ -135,7 +136,9 @@ class RemoteWrapper(object):
             key = f.read().strip()
 
         self.chdir('/tmp')
-        with self.open('django-remote-submission-delete-key.bash', 'wt') as f:
+
+        filename = 'django-remote-submission-{}'.format(uuid.uuid4)
+        with self.open(filename, 'wt') as f:
             program = textwrap.dedent('''\
             sed -i.bak -e /{key}/d $HOME/.ssh/authorized_keys
             '''.format(key=cmd_quote(key.replace('/', '\/'))))
@@ -143,7 +146,7 @@ class RemoteWrapper(object):
             f.write(program)
 
         args = [
-            'bash', '/tmp/django-remote-submission-delete-key.bash',
+            'bash', '/tmp/' + filename,
         ]
 
         self.exec_command(args, '/')
