@@ -12,6 +12,7 @@ python:
 
 before_install:
   - pip install --upgrade codecov
+  - pip install --upgrade six
   - mv .env.travis .env
   - ssh-keygen -q -t rsa -b 4096 -f ~/.ssh/id_rsa -N '' -C django_remote_submission
 
