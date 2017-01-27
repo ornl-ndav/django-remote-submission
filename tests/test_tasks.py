@@ -30,8 +30,7 @@ skip_if_ci = pytest.mark.skipif(
 
 EnvBase = collections.namedtuple('Env', [
     'server_hostname', 'server_port', 'remote_directory', 'remote_filename',
-    'remote_user', 'remote_password', 'interpreter_name',
-    'interpreter_path', 'interpreter_arguments',
+    'remote_user', 'remote_password', 'python_path', 'python_arguments',
 ])
 
 
@@ -59,9 +58,8 @@ def env():
             remote_filename=env('TEST_REMOTE_FILENAME'),
             remote_user=env('TEST_REMOTE_USER'),
             remote_password=env('TEST_REMOTE_PASSWORD'),
-            interpreter_name=env('TEST_INTERPRETER_NAME'),
-            interpreter_path=env('TEST_INTERPRETER_PATH'),
-            interpreter_arguments=env.list('TEST_INTERPRETER_ARGUMENTS'),
+            python_path=env('TEST_PYTHON_PATH'),
+            python_arguments=env.list('TEST_PYTHON_ARGUMENTS'),
         )
     except Exception as e:
         pytest.skip('Environment variables not set: {!r}'.format(e))
@@ -81,9 +79,9 @@ def interpreter(env):
     from django_remote_submission.models import Interpreter
 
     return Interpreter.objects.create(
-        name=env.interpreter_name,
-        path=env.interpreter_path,
-        arguments=env.interpreter_arguments,
+        name='Python',
+        path=env.python_path,
+        arguments=env.python_arguments,
     )
 
 
