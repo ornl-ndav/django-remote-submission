@@ -308,6 +308,4 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
 
             results.append(result)
 
-    results.sort(key=lambda x: x.remote_filename)
-
-    return results
+    return { r.remote_filename: r.pk for r in results }
