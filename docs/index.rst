@@ -12,6 +12,7 @@ Welcome to django-remote-submission's documentation!
 
    testing
    howto
+   release
    modules
 
 Indices and tables
