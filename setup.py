@@ -44,9 +44,11 @@ setup(
     include_package_data=True,
     install_requires=[
         "django>=1.9.6",
+        "djangorestframework",
         "django-model-utils>=2.0",
         "paramiko>=2.0.2",
         "six>=1.10.0",
+        "channels",
     ],
     license="ISCL",
     zip_safe=False,
