@@ -3,6 +3,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.pagination import PageNumberPagination
+from django.views.generic import TemplateView
 
 from .models import Server, Job, Log
 from .serializers import ServerSerializer, JobSerializer, LogSerializer
@@ -39,3 +40,9 @@ class LogViewSet(viewsets.ModelViewSet):
     serializer_class = LogSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
     pagination_class = StandardPagination
+
+
+class JobUserStatus(TemplateView):
+    """Show status of all of user's jobs with live updates."""
+
+    template_name = "django_remote_submission/job-user-status.html"
