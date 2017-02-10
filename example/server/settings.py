@@ -11,10 +11,14 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import environ
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+root = environ.Path(__file__) - 2
+env = environ.Env()
+environ.Env.read_env(root('.env'))
 
+BASE_DIR = root()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -79,7 +83,7 @@ WSGI_APPLICATION = 'server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': root('db.sqlite3'),
     }
 }
 
@@ -134,7 +138,17 @@ CHANNEL_LAYERS = {
         'BACKEND': 'asgi_redis.RedisChannelLayer',
         'CONFIG': {
             'hosts': [('127.0.0.1', 6379)],
-            },
+        },
         'ROUTING': 'server.routing.channel_routing',
     },
 }
+
+# Settings to connect to example server
+EXAMPLE_PYTHON_PATH = env('EXAMPLE_PYTHON_PATH')
+EXAMPLE_PYTHON_ARGUMENTS = env.list('EXAMPLE_PYTHON_ARGUMENTS')
+EXAMPLE_SERVER_HOSTNAME = env('EXAMPLE_SERVER_HOSTNAME')
+EXAMPLE_SERVER_PORT = env.int('EXAMPLE_SERVER_PORT')
+EXAMPLE_REMOTE_DIRECTORY = env('EXAMPLE_REMOTE_DIRECTORY')
+EXAMPLE_REMOTE_FILENAME = env('EXAMPLE_REMOTE_FILENAME')
+EXAMPLE_REMOTE_USER = env('EXAMPLE_REMOTE_USER')
+EXAMPLE_REMOTE_PASSWORD = env('EXAMPLE_REMOTE_PASSWORD')

@@ -15,10 +15,18 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-from .views import IndexView, ServerDetail, ServerList, JobDetail, JobList
+from .views import (
+    IndexView, ServerDetail, ServerList, JobDetail, JobList,
+    ExampleJobStatusView,
+)
 
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^', include('django_remote_submission.urls')),
+    url(r'^$', IndexView.as_view(), name='index'),
+    url(r'^example/$', ExampleJobStatusView.as_view(), name='example'),
+    url(r'^servers/$', ServerList.as_view(), name='server-list'),
+    url(r'^servers/(?P<pk>[0-9]+)/$', ServerDetail.as_view(), name='server-detail'),
+    url(r'^jobs/$', JobList.as_view(), name='job-list'),
+    url(r'^api/', include('django_remote_submission.urls')),
 ]

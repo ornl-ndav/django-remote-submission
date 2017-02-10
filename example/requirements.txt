@@ -3,3 +3,4 @@ celery[redis]
 django
 django-celery-results
 asgi_redis
+django-environ
