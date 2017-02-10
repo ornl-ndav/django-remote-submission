@@ -52,9 +52,10 @@ all: run
 
 .PHONY: run
 run:
-	$(MAKE) -j 2 \
+	$(MAKE) -j 3 \
 		run-server \
-		run-celery
+		run-celery \
+		run-redis
 
 .PHONY: depend
 depend: .depend.secondary
@@ -76,6 +77,10 @@ run-server: .depend.secondary .migrate.secondary .loaddata.secondary
 .PHONY: run-celery
 run-celery: .depend.secondary .migrate.secondary
 	$(PYTHON) -m celery -A server worker --loglevel=info
+
+.PHONY: run-redis
+run-redis:
+	redis-server redis.conf
 
 .PHONY: migrate
 migrate: .migrate.secondary

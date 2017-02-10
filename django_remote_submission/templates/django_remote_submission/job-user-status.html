@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<table class="table">
+  <thead>
+    <th>ID</th>
+    <th>Title</th>
+    <th>Status</th>
+  </thead>
+  <tbody id="django-remote-submission-job-status-rows"></tbody>
+</table>
+
+<script>
+// Note that the path doesn't matter for routing; any WebSocket
+// connection gets bumped over to WebSocket consumers
+socket = new WebSocket("ws://" + window.location.host + "/job-user/");
+socket.onmessage = function(e) {
+  alert(e.data);
+}
+socket.onopen = function() {
+}
+// Call onopen directly if socket is already open
+if (socket.readyState == WebSocket.OPEN) socket.onopen();
+</script>
+
+{% endblock content %}

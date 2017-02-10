@@ -9,3 +9,6 @@ class DjangoRemoteSubmissionConfig(AppConfig):
 
     name = 'django_remote_submission'
     verbose_name = 'Django Remote Submission'
+
+    def ready(self):
+        import django_remote_submission.signals
