@@ -7,6 +7,7 @@
     <th>ID</th>
     <th>Title</th>
     <th>Status</th>
+    <th>Modified</th>
   </thead>
   <tbody id="example-job-status-rows"></tbody>
 </table>
@@ -48,17 +49,41 @@ document.getElementById('example-create-job').addEventListener('click', () => {
 socket = new ReconnectingWebSocket("ws://" + window.location.host + "/job-user/");
 
 socket.onmessage = function(e) {
-  var { job_id, title, status } = JSON.parse(e.data);
+  var { job_id, title, status, modified } = JSON.parse(e.data),
+      tbody = $('#example-job-status-rows'),
+      trs = tbody.children(),
+      tr = $('<tr>').append(
+        $('<td>').text('' + job_id)
+      ).append(
+        $('<td>').text('' + title)
+      ).append(
+        $('<td>').text('' + status)
+      ).append(
+        $('<td>').text('' + modified)
+      ),
+      found = false;
 
-  $('#example-job-status-rows').append(
-    $('<tr>').append(
-      $('<td>').text('' + job_id)
-    ).append(
-      $('<td>').text('' + title)
-    ).append(
-      $('<td>').text('' + status)
-    )
-  );
+  trs.each((i, el) => {
+    var id = +el.firstChild.textContent;
+
+    if (id === job_id) {
+      $(el).replaceWith(tr);
+      found = true;
+      return false;
+    }
+  });
+
+  if (!found) {
+    tr.appendTo(tbody);
+  }
+
+  trs = tbody.children();
+
+  trs.sort((a, b) => {
+    return b.lastChild.textContent.localeCompare(a.lastChild.textContent);
+  });
+
+  trs.detach().appendTo(tbody);
 }
 
 socket.onopen = function() { }

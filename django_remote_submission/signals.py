@@ -17,5 +17,6 @@ def update_job_status_listeners(sender, instance, **kwargs):
             'job_id': instance.id,
             'title': instance.title,
             'status': instance.status,
+            'modified': instance.modified.isoformat(),
         }),
     })
