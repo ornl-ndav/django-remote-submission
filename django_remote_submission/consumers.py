@@ -7,12 +7,21 @@ from channels.auth import channel_session_user_from_http, channel_session_user
 
 from .models import Job
 
+import json
+
 
 @channel_session_user_from_http
 def ws_connect(message):
-    message.reply_channel.send({
-        'accept': True,
-    })
+    last_jobs = message.user.jobs.order_by('-modified')[:10]
+
+    for job in last_jobs:
+        message.reply_channel.send({
+            'text': json.dumps({
+                'job_id': job.id,
+                'title': job.title,
+                'status': job.status,
+            }),
+        })
 
     Group('job-user-{}'.format(message.user.username)).add(
         message.reply_channel,
