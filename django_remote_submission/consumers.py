@@ -20,6 +20,7 @@ def ws_connect(message):
                 'job_id': job.id,
                 'title': job.title,
                 'status': job.status,
+                'modified': job.modified.isoformat(),
             }),
         })
 
