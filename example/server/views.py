@@ -35,6 +35,15 @@ class JobList(ListView):
     model = Job
 
 
+class ExampleJobLogView(TemplateView):
+    template_name = 'example_job_log.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ExampleJobLogView, self).get_context_data(**kwargs)
+        context['job_pk'] = kwargs['job_pk']
+        return context
+
+
 class ExampleJobStatusView(TemplateView):
     template_name = 'example_job_status.html'
 
@@ -58,6 +67,7 @@ class ExampleJobStatusView(TemplateView):
         for i in range(5):
             with open('{}.txt'.format(i), 'wt') as f:
                 print('Line {}'.format(i), file=f)
+                print('Line {}'.format(i))
             time.sleep(1)
         ''')
 

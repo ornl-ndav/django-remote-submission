@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<table class="table">
+  <thead>
+    <th>ID</th>
+    <th>Time</th>
+    <th>Stream</th>
+    <th>Content</th>
+  </thead>
+  <tbody id="example-job-log-rows"></tbody>
+</table>
+
+<script src="https://cdn.rawgit.com/joewalnes/reconnecting-websocket/fd7c819bb15eeee3452c17e317c0a3664c442965/reconnecting-websocket.min.js"></script>
+<script>
+
+socket = new ReconnectingWebSocket("ws://" + window.location.host + "/job-log/{{ job_pk }}/");
+
+socket.onmessage = function(e) {
+  var { log_id, time, content, stream } = JSON.parse(e.data);
+
+  $('#example-job-log-rows').append(
+    $('<tr>').append(
+      $('<td>').text('' + log_id)
+    ).append(
+      $('<td>').text('' + time)
+    ).append(
+      $('<td>').text('' + stream)
+    ).append(
+      $('<td>').append(
+        $('<pre>').text('' + content)
+      )
+    )
+  );
+}
+
+socket.onopen = function() { }
+
+// Call onopen directly if socket is already open
+if (socket.readyState == WebSocket.OPEN) socket.onopen();
+</script>
+
+{% endblock content %}
