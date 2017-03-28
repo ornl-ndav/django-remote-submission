@@ -55,6 +55,9 @@ class RemoteWrapper(object):
         self._sftp = None
         """The Paramiko SFTP instance"""
 
+        self._public_key_filename = None
+        """The Public key passed as parameter"""
+
     def __enter__(self):
         """Allow the use of ``with wrapper:``."""
         return self
@@ -75,8 +78,9 @@ class RemoteWrapper(object):
         :param str public_key_filename: the file containing the public key
 
         """
-        if public_key_filename is None:
-            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+        # DO NOT FIND THE PUBLIC KEY!
+        # if public_key_filename is None:
+        #     public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
 
         self._public_key_filename = public_key_filename
         self._client = self._start_client(password, public_key_filename)
@@ -129,6 +133,8 @@ class RemoteWrapper(object):
                 wrapper.delete_key()
 
         """
+        if self._public_key_filename is None:
+            self._public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
         if self._client is None:
             raise ValueError('Wrapper must be connected before delete_key is called')
 
@@ -207,13 +213,19 @@ class RemoteWrapper(object):
                     return False
 
     def _start_client(self, password, public_key_filename):
+        '''
+        Try to loginf first with public_key_filename then with password
+        '''
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy())
 
         server_hostname = self.hostname
         server_port = self.port
 
-        try:
+        if password is None and public_key_filename is None:
+            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+
+        if public_key_filename is not None and os.path.exists(public_key_filename):
             logger.info("Connecting to %s with public key.", server_hostname)
             client.connect(
                 server_hostname,
@@ -221,13 +233,7 @@ class RemoteWrapper(object):
                 username=self.username,
                 key_filename=public_key_filename,
             )
-
-        except (AuthenticationException, BadHostKeyException) as e:
-            if password is None:
-                logger.error("Connection with public key failed! "
-                             "The password is mandatory")
-                six.raise_from(ValueError('needs password'), e)
-
+        elif password is not None:
             try:
                 logger.info("Connecting to %s with password.", server_hostname)
                 client.connect(
@@ -236,11 +242,11 @@ class RemoteWrapper(object):
                     username=self.username,
                     password=password,
                 )
-                deploy_key_if_it_doesnt_exist(client, public_key_filename)
-
             except AuthenticationException as e:
                 logger.error("Authenctication error! Wrong password...")
                 six.raise_from(ValueError('incorrect password'), e)
+        else:
+            logger.error("Connection with both public key and password failed!")
 
         return client
 
@@ -249,34 +255,43 @@ class RemoteWrapper(object):
 
         if timeout is not None:
             command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
-
         return command
 
+    def deploy_key_if_it_doesnt_exist(self, public_key_filename=None):
+        """Deploy our public key to the remote server.
 
-def deploy_key_if_it_doesnt_exist(client, public_key_filename):
-    """Deploy our public key to the remote server.
+        :param paramiko.client.SSHClient client: an existing Paramiko client
+        :param str public_key_filename: the name of the file with the public key
 
-    :param paramiko.client.SSHClient client: an existing Paramiko client
-    :param str public_key_filename: the name of the file with the public key
+        This can be called as:
+        key = os.path.expanduser('~/.ssh/id_rsa.pub')
+        wrapper = RemoteWrapper(hostname=server.hostname, username=username)
+        wrapper.connect(password)
+        wrapper.deploy_key_if_it_doesnt_exist(key)
+        wrapper.close()
 
-    """
-    with open(public_key_filename, 'rt') as f:
-        key = f.read()
+        """
 
-    client.exec_command('mkdir -p ~/.ssh/')
-    client.exec_command('chmod 700 ~/.ssh/')
-    client.exec_command('chmod 644 ~/.ssh/authorized_keys')
+        if public_key_filename is None:
+            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
 
-    command = textwrap.dedent('''\
-    KEY={}
-    if [ -z "$(grep \"$KEY\" ~/.ssh/authorized_keys )" ]; then
-        printf $'%s\n' "$KEY" >> ~/.ssh/authorized_keys
-        echo key added.
-    fi
-    '''.format(cmd_quote(key.strip('\n'))))
+        with open(public_key_filename, 'rt') as f:
+            key = f.read()
 
-    stdin, stdout, stderr = client.exec_command(command)
-    logger.debug(stdout.readlines())
-    logger.debug(stderr.readlines())
+        self._client.exec_command('mkdir -p ~/.ssh/')
+        self._client.exec_command('chmod 700 ~/.ssh/')
+        self._client.exec_command('chmod 644 ~/.ssh/authorized_keys')
 
-    client.exec_command('chmod 644 ~/.ssh/authorized_keys')
+        command = textwrap.dedent('''\
+        KEY={}
+        if [ -z "$(grep \"$KEY\" ~/.ssh/authorized_keys )" ]; then
+            printf $'%s\n' "$KEY" >> ~/.ssh/authorized_keys
+            echo key added.
+        fi
+        '''.format(cmd_quote(key.strip('\n'))))
+
+        stdin, stdout, stderr = self._client.exec_command(command)
+        logger.debug(stdout.readlines())
+        logger.debug(stderr.readlines())
+
+        self._client.exec_command('chmod 644 ~/.ssh/authorized_keys')

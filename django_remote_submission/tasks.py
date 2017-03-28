@@ -5,30 +5,30 @@ background thread, or as a normal function call, in which case it will block
 the current execution thread.
 
 """
-from __future__ import absolute_import, unicode_literals, print_function
-import os
-import sys
-import logging
+from __future__ import absolute_import, print_function, unicode_literals
 
-logger = logging.getLogger(__name__)
-
+import collections
+import fnmatch
 import io
+import logging
+import os
 import os.path
 import select
 import socket
-import collections
-import fnmatch
+import sys
+import time
+from threading import Thread
 
 import six
-from paramiko import (
-    AuthenticationException, BadHostKeyException, AuthenticationException,
-)
-from paramiko.client import SSHClient, AutoAddPolicy
-from threading import Thread
 from django.core.files import File
+from paramiko import AuthenticationException, BadHostKeyException
+from paramiko.client import AutoAddPolicy, SSHClient
 
-from .models import Log, Job, Result, Interpreter
+from .models import Interpreter, Job, Log, Result
 from .remote import RemoteWrapper
+
+logger = logging.getLogger(__name__)
+
 
 try:
     from celery import shared_task
@@ -215,15 +215,16 @@ class LogContainer(object):
 
 
 @shared_task
-def submit_job_to_server(job_pk, password, username=None, timeout=None,
-                         log_policy=LogPolicy.LOG_LIVE, store_results=None,
-                         wrapper_cls=RemoteWrapper):
+def submit_job_to_server(job_pk, password=None, public_key_filename=None, username=None,
+                         timeout=None, log_policy=LogPolicy.LOG_LIVE,
+                         store_results=None, wrapper_cls=RemoteWrapper):
     """Submit a job to the remote server.
 
     This can be used as a Celery task, if the library is installed and running.
 
     :param int job_pk: the primary key of the :class:`models.Job` to submit
     :param str password: the password of the user submitting the job
+    :param public_key_filename: the path where it is.
     :param str username: the username of the user submitting, if it is
         different from the owner of the job
     :param datetime.timedelta timeout: the timeout for running the job
@@ -248,13 +249,13 @@ def submit_job_to_server(job_pk, password, username=None, timeout=None,
         log_policy=log_policy,
     )
 
-    with wrapper.connect(password):
+    with wrapper.connect(password, public_key_filename):
         wrapper.chdir(job.remote_directory)
 
         with wrapper.open(job.remote_filename, 'wt') as f:
             f.write(job.program)
 
-        import time; time.sleep(1)
+        time.sleep(1)
 
         job.status = Job.STATUS.submitted
         job.save()

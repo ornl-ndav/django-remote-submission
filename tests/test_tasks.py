@@ -537,16 +537,6 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     submit_job_to_server(add_key_job.pk, env.remote_password,
                          wrapper_cls=wrapper_cls)
 
-    simple_job = job_gen(
-        program='''\
-        true
-        ''',
-        interpreter=sh,
-    )
-
-    submit_job_to_server(simple_job.pk, None, wrapper_cls=wrapper_cls)
-
-
 @pytest.mark.django_db
 def test_delete_key(env):
     from django_remote_submission.remote import RemoteWrapper
@@ -560,9 +550,16 @@ def test_delete_key(env):
         port=env.server_port,
     )
 
-    with wrapper.connect(password=env.remote_password):
+    # Connect with password drop the key
+    with wrapper.connect(env.remote_password):
+        public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+        wrapper.deploy_key_if_it_doesnt_exist(public_key_filename)
+
+    # Connect without password
+    with wrapper.connect():
+        pass
+
+    # delete the they
+    with wrapper.connect(env.remote_password):
         wrapper.delete_key()
 
-    with pytest.raises(ValueError, message='needs password'):
-        with wrapper.connect(password=None):
-            pass

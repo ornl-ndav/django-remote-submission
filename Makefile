@@ -35,10 +35,10 @@ doclint: ## check documentation style with flake8
 	flake8 --select=D --ignore=F django_remote_submission
 
 test: ## run tests quickly with the default Python
-	pytest
+	pytest -v
 
 test-ci:  ## run tests without using the remote host
-	pytest --ci
+	pytest --ci -v
 
 test-all: ## run tests on every Python version with tox
 	tox
