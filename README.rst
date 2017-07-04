@@ -27,6 +27,8 @@ Install Django Remote Submission::
 
 Then use it in a project::
 
+.. code:: python
+
     from django_remote_submission.models import Server, Job
     from django_remote_submission.tasks import submit_job_to_server
 
@@ -131,16 +133,11 @@ Useful notes
 
 When integrating this in django it might be usefull:
 
-Add to settings::
-
-	CELERY_ACCEPT_CONTENT = ['pickle']
-	CELERY_EVENT_SERIALIZER = 'pickle'
-	CELERY_TASK_SERIALIZER = 'pickle'  
-	CELERY_RESULT_SERIALIZER = 'pickle'
-
 if using the app ``'django_celery_results``. Otherwise Result is not serialized.
 
 The Results files are stored in MEDIA. So add to your setings something similar to::
+
+.. code:: python
 
 	MEDIA_URL = '/media/'
 	MEDIA_ROOT = '../dist/media'
