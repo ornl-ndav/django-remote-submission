@@ -28,7 +28,7 @@ Install Django Remote Submission::
 Then use it in a project::
 
 .. code:: python
-
+    
     from django_remote_submission.models import Server, Job
     from django_remote_submission.tasks import submit_job_to_server
 
