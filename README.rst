@@ -25,10 +25,10 @@ Install Django Remote Submission::
 
     pip install django-remote-submission
 
-Then use it in a project::
+Then use it in a project:
 
 .. code:: python
-    
+
     from django_remote_submission.models import Server, Job
     from django_remote_submission.tasks import submit_job_to_server
 
@@ -135,14 +135,16 @@ When integrating this in django it might be usefull:
 
 if using the app ``'django_celery_results``. Otherwise Result is not serialized.
 
-The Results files are stored in MEDIA. So add to your setings something similar to::
+The Results files are stored in MEDIA. So add to your setings something similar to:
 
 .. code:: python
 
 	MEDIA_URL = '/media/'
 	MEDIA_ROOT = '../dist/media'
 
-To make media available in DEBUG mode, you might want to add to the main ``urls.py``::
+To make media available in DEBUG mode, you might want to add to the main ``urls.py``:
+
+.. code:: python
 
 	if settings.DEBUG:
 	    # Serving files uploaded by a user during development
