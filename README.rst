@@ -96,10 +96,8 @@ will be skipped, but it won't affect the success or failure of the tests.
 
 Running tests independtely, e.g.::
 
-    python runtests.py tests.test_tasks.SubmitJobTaskTest.test_normal_usage
-    python runtests.py tests.test_tasks.SubmitJobTaskTest
-    python runtests.py tests.test_tasks
-    python runtests.py tests.test_models
+    pytest -v tests/test_models.py
+    pytest -v tests/test_models.py::test_server_string_representation
 
 =============================
 Running the Example
