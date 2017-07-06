@@ -8,4 +8,5 @@ Remote
 
    .. automethod:: __init__
 
-.. autofunction:: django_remote_submission.remote.deploy_key_if_it_doesnt_exist
+   .. automethod:: deploy_key_if_it_does_not_exist
+   .. automethod:: delete_key

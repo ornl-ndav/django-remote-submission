@@ -14,3 +14,7 @@ Tasks
    .. automethod:: __init__
 
 .. autofunction:: django_remote_submission.tasks.submit_job_to_server
+
+.. autofunction:: django_remote_submission.tasks.copy_key_to_server
+
+.. autofunction:: django_remote_submission.tasks.delete_key_from_server

@@ -61,9 +61,38 @@ Then use it in a project:
         interpreter=python2_interpreter,
     )[0]
 
-    modified_files = submit_job_to_server(
+    # Using delay calls celery:
+    modified_files = submit_job_to_server.delay(
         job_pk=job.pk,
         password=request.POST.get('password'),
+    )
+
+To avoid storing the password one can deploy the client public key in the server.
+
+.. code:: python
+
+    from django_remote_submission.tasks import copy_key_to_server
+
+    copy_key_to_server(
+        username=env.remote_user,
+        password=env.remote_password,
+        hostname=env.server_hostname,
+        port=env.server_port,
+        public_key_filename=None, # finds it automaticaly
+    )
+
+And it can be deleted once the session is finished:
+
+.. code:: python
+
+    from django_remote_submission.tasks import delete_key_from_server
+
+    delete_key_from_server(
+        username=env.remote_user,
+        password=env.remote_password,
+        hostname=env.server_hostname,
+        port=env.server_port,
+        public_key_filename=None,
     )
 
 Features
@@ -74,6 +103,10 @@ Features
 * Able to receive logs and write them to a database in realtime.
 
 * Able to return any modified files from the remote server.
+
+* Uses Server Side Events (SSE) to notify the Web Client the Job status
+
+* Uses WebSockets / SSE to provide Job Log in real time to a Web Client
 
 Running Tests
 --------------

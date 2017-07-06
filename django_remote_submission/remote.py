@@ -123,40 +123,6 @@ class RemoteWrapper(object):
         """
         return self._sftp.listdir_attr()
 
-    def delete_key(self):
-        """Delete the server's public key from remote host.
-
-        For example::
-
-            wrapper = RemoteWrapper(hostname, username)
-            with wrapper.connect(password, public_key_filename):
-                wrapper.delete_key()
-
-        """
-        if self._public_key_filename is None:
-            self._public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
-        if self._client is None:
-            raise ValueError('Wrapper must be connected before delete_key is called')
-
-        with open(self._public_key_filename, 'rt') as f:
-            key = f.read().strip()
-
-        self.chdir('/tmp')
-
-        filename = 'django-remote-submission-{}'.format(uuid.uuid4)
-        with self.open(filename, 'wt') as f:
-            program = textwrap.dedent('''\
-            sed -i.bak -e /{key}/d $HOME/.ssh/authorized_keys
-            '''.format(key=cmd_quote(key.replace('/', '\/'))))
-
-            f.write(program)
-
-        args = [
-            'bash', '/tmp/' + filename,
-        ]
-
-        self.exec_command(args, '/')
-
 
     def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
                      stderr_handler=None):
@@ -219,34 +185,46 @@ class RemoteWrapper(object):
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy())
 
+        username = self.username
         server_hostname = self.hostname
         server_port = self.port
 
-        if password is None and public_key_filename is None:
-            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
-
-        if public_key_filename is not None and os.path.exists(public_key_filename):
-            logger.info("Connecting to %s with public key.", server_hostname)
-            client.connect(
-                server_hostname,
-                port=server_port,
-                username=self.username,
-                key_filename=public_key_filename,
-            )
-        elif password is not None:
+        if password is not None:
             try:
-                logger.info("Connecting to %s with password.", server_hostname)
+                logger.info("Connecting user %s to %s with password.",
+                            username, server_hostname)
                 client.connect(
                     server_hostname,
                     port=server_port,
-                    username=self.username,
+                    username=username,
                     password=password,
                 )
             except AuthenticationException as e:
                 logger.error("Authenctication error! Wrong password...")
                 six.raise_from(ValueError('incorrect password'), e)
         else:
-            logger.error("Connection with both public key and password failed!")
+            logger.debug("Trying to connect with the public key")
+            if public_key_filename is None:
+                public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+            if (public_key_filename is not None and 
+                    os.path.exists(public_key_filename)):
+                try:
+                    logger.info("Connecting to %s with public key.",
+                                server_hostname)
+                    client.connect(
+                        server_hostname,
+                        port=server_port,
+                        username=username,
+                        key_filename=public_key_filename,
+                    )
+                except AuthenticationException as e:
+                    logger.error("Problems connecting with the public key...")
+                    six.raise_from(ValueError('incorrect public key'), e)
+            else:
+                logger.error("You need to provide either a valid Public Key \
+                    or Password!")
+                raise ValueError('To connect to the server you need \
+                    either a password or your public key!')
 
         return client
 
@@ -257,26 +235,28 @@ class RemoteWrapper(object):
             command = 'timeout {}s {}'.format(timeout.total_seconds(), command)
         return command
 
-    def deploy_key_if_it_doesnt_exist(self, public_key_filename=None):
+    def deploy_key_if_it_does_not_exist(self):
         """Deploy our public key to the remote server.
 
         :param paramiko.client.SSHClient client: an existing Paramiko client
         :param str public_key_filename: the name of the file with the public key
 
         This can be called as:
-        key = os.path.expanduser('~/.ssh/id_rsa.pub')
-        wrapper = RemoteWrapper(hostname=server.hostname, username=username)
-        wrapper.connect(password)
-        wrapper.deploy_key_if_it_doesnt_exist(key)
-        wrapper.close()
+            key = os.path.expanduser('~/.ssh/id_rsa.pub')
+            wrapper = RemoteWrapper(hostname=server.hostname, username=username)
+            wrapper.connect(password)
+            wrapper.deploy_key_if_it_does_not_exist()
+            wrapper.close()
 
         """
 
-        if public_key_filename is None:
-            public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+        if self._public_key_filename is None:
+            self._public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+        if self._client is None:
+            raise ValueError('Wrapper must be connected before deploy_key is called')
 
-        with open(public_key_filename, 'rt') as f:
-            key = f.read()
+        with open(self._public_key_filename, 'rt') as f:
+            key = f.read().strip()
 
         self._client.exec_command('mkdir -p ~/.ssh/')
         self._client.exec_command('chmod 700 ~/.ssh/')
@@ -295,3 +275,37 @@ class RemoteWrapper(object):
         logger.debug(stderr.readlines())
 
         self._client.exec_command('chmod 644 ~/.ssh/authorized_keys')
+
+    def delete_key(self):
+        """Delete the server's public key from remote host.
+
+        For example::
+
+            wrapper = RemoteWrapper(hostname, username)
+            with wrapper.connect(password, public_key_filename):
+                wrapper.delete_key()
+
+        """
+        if self._public_key_filename is None:
+            self._public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+        if self._client is None:
+            raise ValueError('Wrapper must be connected before delete_key is called')
+
+        with open(self._public_key_filename, 'rt') as f:
+            key = f.read().strip()
+
+        self.chdir('/tmp')
+
+        filename = 'django-remote-submission-{}'.format(uuid.uuid4)
+        with self.open(filename, 'wt') as f:
+            program = textwrap.dedent('''\
+            sed -i.bak -e /{key}/d $HOME/.ssh/authorized_keys
+            '''.format(key=cmd_quote(key.replace('/', '\/'))))
+
+            f.write(program)
+
+        args = [
+            'bash', '/tmp/' + filename,
+        ]
+
+        self.exec_command(args, '/')

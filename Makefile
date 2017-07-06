@@ -44,15 +44,12 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source django_remote_submission runtests.py tests
-	coverage report -m
-	coverage html
-	open htmlcov/index.html
+	py.test --cov=django_remote_submission tests/
 
 docs/.venv.secondary:
-	python2.7 -m virtualenv docs/venv && \
+	python -m virtualenv docs/venv && \
 	source docs/venv/bin/activate && \
-	python2.7 -m pip install -r requirements_docs.txt
+	python -m pip install -r requirements_docs.txt
 	touch $@
 
 docs: docs/.venv.secondary  ## generate Sphinx HTML documentation, including API docs

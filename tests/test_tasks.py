@@ -12,6 +12,13 @@ import collections
 import pytest
 import textwrap
 import os
+import logging
+import sys
+from django_remote_submission.remote import RemoteWrapper
+
+
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -174,7 +181,9 @@ def wrapper_cls(request):
 
     class LocalWrapper(RemoteWrapper):
         def __init__(self, *args, **kwargs):
+            super(LocalWrapper, self).__init__(*args, **kwargs)
             self.workdir = os.getcwd()
+            print(dir(self))
 
         def connect(self, *args, **kwargs):
             return self
@@ -241,6 +250,7 @@ def wrapper_cls(request):
             return process.returncode == 0
 
     if request.param:
+        # return RemoteWrapper
         return LocalWrapper
     elif pytest.config.getoption('--ci'):
         pytest.skip('running on continuous integration')
@@ -537,12 +547,13 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     submit_job_to_server(add_key_job.pk, env.remote_password,
                          wrapper_cls=wrapper_cls)
 
+
 @pytest.mark.django_db
-def test_delete_key(env):
+def test_delete_key_old_way(env):
     from django_remote_submission.remote import RemoteWrapper
 
-    if pytest.config.getoption('--ci'):
-        pytest.skip('does not work in CI environments')
+    # if pytest.config.getoption('--ci'):
+    #     pytest.skip('does not work in CI environments')
 
     wrapper = RemoteWrapper(
         hostname=env.server_hostname,
@@ -550,10 +561,11 @@ def test_delete_key(env):
         port=env.server_port,
     )
 
+    public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+
     # Connect with password drop the key
-    with wrapper.connect(env.remote_password):
-        public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
-        wrapper.deploy_key_if_it_doesnt_exist(public_key_filename)
+    with wrapper.connect(env.remote_password, public_key_filename):
+        wrapper.deploy_key_if_it_does_not_exist()
 
     # Connect without password
     with wrapper.connect():
@@ -562,4 +574,49 @@ def test_delete_key(env):
     # delete the they
     with wrapper.connect(env.remote_password):
         wrapper.delete_key()
+
+
+@pytest.mark.django_db
+def test_deploy_and_delete_key(env, wrapper_cls=RemoteWrapper):
+    '''
+    This is the new way of deploying and deleting the private key
+    '''
+    from django_remote_submission.tasks import (
+        copy_key_to_server,
+        delete_key_from_server
+    )
+
+    copy_key_to_server(
+        username=env.remote_user,
+        password=env.remote_password,
+        hostname=env.server_hostname,
+        port=env.server_port,
+        public_key_filename=None,
+        wrapper_cls=wrapper_cls,
+    )
+    # This wrapper is just for testing
+    # Note that no password is passed!
+    wrapper = wrapper_cls(
+        hostname=env.server_hostname,
+        username=env.remote_user,
+        port=env.server_port,
+    )
+
+    # Connect without password
+    with wrapper.connect():
+        pass
+    
+    delete_key_from_server(
+        username=env.remote_user,
+        password=env.remote_password,
+        hostname=env.server_hostname,
+        port=env.server_port,
+        public_key_filename=None,
+        wrapper_cls=wrapper_cls,
+    )
+
+    with pytest.raises(ValueError, message="incorrect public key"):
+        # Connect without password fails!
+        with wrapper.connect():
+            pass
 

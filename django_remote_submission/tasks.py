@@ -310,3 +310,66 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
             results.append(result)
 
     return { r.remote_filename: r.pk for r in results }
+
+
+@shared_task
+def copy_key_to_server(username, password, hostname, port=22,
+                       public_key_filename=None,
+                       wrapper_cls=RemoteWrapper):
+    """Copy the client key to the remote server so the next connections
+    do not need the password any further
+
+    This can be used as a Celery task, if the library is installed and running.
+    
+    :param str username: the username of the user submitting
+    :param str password: the password of the user submitting the job
+    :param str hostname: The hostname used to connect to the server
+    :param int port: The port to connect to for SSH (usually 22)
+    :param public_key_filename: the path where it is.
+    :param class wrapper_cls: the class constructor to connect to a remote host
+
+    """
+   
+    wrapper = wrapper_cls(
+        hostname=hostname,
+        username=username,
+        port=port,
+    )
+    # wrapper_cls.hostname = hostname
+    # wrapper_cls.username = username
+    # wrapper_cls.port = port
+
+    with wrapper.connect(password, public_key_filename):
+        wrapper.deploy_key_if_it_does_not_exist()
+
+    return None
+
+
+@shared_task
+def delete_key_from_server(username, password, hostname, port=22,
+                           public_key_filename=None,
+                           wrapper_cls=RemoteWrapper):
+    """Delete the client key from the remote server so the next connections
+    will need password. This can be used at the logout of the session.
+
+    This can be used as a Celery task, if the library is installed and running.
+    
+    :param str username: the username of the user submitting
+    :param str password: the password of the user submitting the job
+    :param str hostname: The hostname used to connect to the server
+    :param int port: The port to connect to for SSH (usually 22)
+    :param public_key_filename: the path where it is.
+    :param class wrapper_cls: the class constructor to connect to a remote host
+
+    """
+   
+    wrapper = wrapper_cls(
+        hostname=hostname,
+        username=username,
+        port=port,
+    )
+
+    with wrapper.connect(password, public_key_filename):
+        wrapper.delete_key()
+
+    return None
