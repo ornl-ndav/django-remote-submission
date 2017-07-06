@@ -148,23 +148,26 @@ Launch Celery::
 Launch Django::
 
     cd example
+    # Note that there's a requirements file in this folder!
     PYTHONPATH=../ ./manage.py makemigrations
     PYTHONPATH=../ ./manage.py migrate
     PYTHONPATH=../ ./manage.py loaddata fixtures/initial_data.json
+    # You may want to create a user:
+    # python manage.py createsuperuser
     PYTHONPATH=../ ./manage.py runserver
 
 Open in the browser::
 
+    # For the Admin Interface
     http://localhost:8000/admin/
+    # For the REST API
     http://localhost:8000/
+
+The password for admin is ``admin123``.
 
 =============================
 Useful notes
 =============================
-
-When integrating this in django it might be usefull:
-
-if using the app ``'django_celery_results``. Otherwise Result is not serialized.
 
 The Results files are stored in MEDIA. So add to your setings something similar to:
 

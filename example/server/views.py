@@ -4,11 +4,12 @@ from django.http import HttpResponse
 
 from django_remote_submission.models import Interpreter, Server, Job, Log
 from django_remote_submission.tasks import submit_job_to_server
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 import textwrap
 
 
-class IndexView(TemplateView):
+class IndexView(LoginRequiredMixin, TemplateView):
     template_name = "index.html"
 
     def get_context_data(self, **kwargs):
@@ -19,23 +20,23 @@ class IndexView(TemplateView):
         return context
 
 
-class ServerDetail(DetailView):
+class ServerDetail(LoginRequiredMixin, DetailView):
     model = Server
 
 
-class ServerList(ListView):
+class ServerList(LoginRequiredMixin, ListView):
     model = Server
 
 
-class JobDetail(DetailView):
+class JobDetail(LoginRequiredMixin, DetailView):
     model = Job
 
 
-class JobList(ListView):
+class JobList(LoginRequiredMixin, ListView):
     model = Job
 
 
-class ExampleJobLogView(TemplateView):
+class ExampleJobLogView(LoginRequiredMixin, TemplateView):
     template_name = 'example_job_log.html'
 
     def get_context_data(self, **kwargs):
@@ -44,7 +45,7 @@ class ExampleJobLogView(TemplateView):
         return context
 
 
-class ExampleJobStatusView(TemplateView):
+class ExampleJobStatusView(LoginRequiredMixin, TemplateView):
     template_name = 'example_job_status.html'
 
     def post(self, request, *args, **kwargs):
@@ -82,9 +83,9 @@ class ExampleJobStatusView(TemplateView):
         )
 
         _ = submit_job_to_server.delay(
-            job.pk,
-            settings.EXAMPLE_REMOTE_USER,
-            settings.EXAMPLE_REMOTE_PASSWORD,
+            job_pk=job.pk,
+            password=settings.EXAMPLE_REMOTE_PASSWORD,
+            username=settings.EXAMPLE_REMOTE_USER,
         )
 
         return HttpResponse('success')

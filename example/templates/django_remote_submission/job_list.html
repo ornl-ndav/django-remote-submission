@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Server List</h1>
+<h1>Job List</h1>
 <ul>
-  {% for server in server_list %}
+  {% for job in job_list %}
   <li>
-    {{ server }}
+    {{ job }}
   </li>
   {% endfor %}
 </ul>

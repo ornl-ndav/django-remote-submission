@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from .views import (
     IndexView, ServerDetail, ServerList, JobDetail, JobList,
     ExampleJobStatusView, ExampleJobLogView,
@@ -24,6 +25,10 @@ from .views import (
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', IndexView.as_view(), name='index'),
+    #
+    url(r'^accounts/login/$', auth_views.login, {'template_name': 'login.html'}, name='login'),
+    url(r'^logout/$', auth_views.logout, {'template_name': 'logged_out.html'}, name='logout'),
+    #
     url(r'^example/$', ExampleJobStatusView.as_view(), name='example'),
     url(r'^logs/(?P<job_pk>[0-9]+)/$', ExampleJobLogView.as_view(), name='logs'),
     url(r'^servers/$', ServerList.as_view(), name='server-list'),
