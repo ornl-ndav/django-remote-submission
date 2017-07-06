@@ -548,6 +548,10 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
                          wrapper_cls=wrapper_cls)
 
 
+@pytest.mark.skipif(
+    pytest.config.getoption('--ci'),
+    reason='Does not work on ci',
+)
 @pytest.mark.django_db
 def test_delete_key_old_way(env):
     from django_remote_submission.remote import RemoteWrapper
@@ -575,7 +579,10 @@ def test_delete_key_old_way(env):
     with wrapper.connect(env.remote_password):
         wrapper.delete_key()
 
-
+@pytest.mark.skipif(
+    pytest.config.getoption('--ci'),
+    reason='Does not work on ci',
+)
 @pytest.mark.django_db
 def test_deploy_and_delete_key(env, wrapper_cls=RemoteWrapper):
     '''
