@@ -9,7 +9,34 @@
       integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
       crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <title>title</title>
+    <title>Django Remote Submission Example</title>
+      <style>
+        body {
+            margin-top: 60px;
+            padding: 20px;
+        }
+        .label-initial {
+          background-color: #777777;
+        }
+        .label-initial[href]:hover,
+        .label-initial[href]:focus {
+          background-color: #777777;
+        }
+        .label-submitted {
+          background-color: #00451d;
+        }
+        .label-submitted[href]:hover,
+        .label-submitted[href]:focus {
+          background-color: #00451d;
+        }
+        .label-failure {
+          background-color: #d9534f;
+        }
+        .label-failure[href]:hover,
+        .label-failure[href]:focus {
+          background-color: #c9302c;
+        }
+    </style>
   </head>
   <body>
     {% block content %}

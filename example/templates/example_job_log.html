@@ -1,16 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-<table class="table">
-  <thead>
-    <th>ID</th>
-    <th>Time</th>
-    <th>Stream</th>
-    <th>Content</th>
-  </thead>
-  <tbody id="example-job-log-rows"></tbody>
-</table>
 
+
+
+<div class="container">
+  <h1>Log for Job #{{job_pk}}</h1>
+  <table class="table table-striped">
+    <thead>
+      <th style="width:5%">Log ID</th>
+      <th style="width:15%">Time</th>
+      <th style="width:10%">Stream</th>
+      <th style="width:70%">Content</th>
+    </thead>
+    <tbody id="example-job-log-rows"></tbody>
+  </table>
+  <a id="cancel" class="btn btn-default" data-toggle="tooltip" data-placement="top" onclick="window.history.back()"
+73	            href="#" title="Go back.">Go Back</a>
+</div>
 <script src="https://cdn.rawgit.com/joewalnes/reconnecting-websocket/fd7c819bb15eeee3452c17e317c0a3664c442965/reconnecting-websocket.min.js"></script>
 <script>
 
@@ -23,7 +30,7 @@ socket.onmessage = function(e) {
     $('<tr>').append(
       $('<td>').text('' + log_id)
     ).append(
-      $('<td>').text('' + time)
+      $('<td>').text('' + new Date(time).toLocaleString())
     ).append(
       $('<td>').text('' + stream)
     ).append(

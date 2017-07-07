@@ -64,9 +64,10 @@ class ExampleJobStatusView(LoginRequiredMixin, TemplateView):
         num_jobs = len(Job.objects.all())
 
         program = textwrap.dedent('''\
+        from __future__ import print_function
         import time
         for i in range(5):
-            with open('{}.txt'.format(i), 'wt') as f:
+            with open('django_remote_submission_example_out_{}.txt'.format(i), 'wt') as f:
                 print('Line {}'.format(i), file=f)
                 print('Line {}'.format(i))
             time.sleep(1)
@@ -82,7 +83,7 @@ class ExampleJobStatusView(LoginRequiredMixin, TemplateView):
             interpreter=interpreter,
         )
 
-        _ = submit_job_to_server.delay(
+        submit_job_to_server.delay(
             job_pk=job.pk,
             password=settings.EXAMPLE_REMOTE_PASSWORD,
             username=settings.EXAMPLE_REMOTE_USER,

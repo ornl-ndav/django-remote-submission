@@ -7,9 +7,6 @@ from channels.auth import channel_session_user_from_http, channel_session_user
 
 from .models import Job
 
-import json
-
-
 @channel_session_user_from_http
 def ws_job_status_connect(message):
     last_jobs = message.user.jobs.order_by('-modified')[:10]

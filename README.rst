@@ -149,21 +149,52 @@ Launch Django::
 
     cd example
     # Note that there's a requirements file in this folder!
-    PYTHONPATH=../ ./manage.py makemigrations
-    PYTHONPATH=../ ./manage.py migrate
-    PYTHONPATH=../ ./manage.py loaddata fixtures/initial_data.json
+    # Install it in a virtual environment!
+    ./manage.py makemigrations
+    ./manage.py migrate
+    ./manage.py loaddata fixtures/initial_data.json
     # You may want to create a user:
     # python manage.py createsuperuser
-    PYTHONPATH=../ ./manage.py runserver
+    ./manage.py runserver
 
-Open in the browser::
+Open in the browser one of the links below. The password for admin is ``admin123``::
 
     # For the Admin Interface
     http://localhost:8000/admin/
     # For the REST API
     http://localhost:8000/
+    # To test Job creation with live status update
+    http://127.0.0.1:8000/example/
 
-The password for admin is ``admin123``.
+
+=============================
+Web Interface
+=============================
+
+The app provides two web sockets (SSE) to see in real time the Job Status and the Log associated to a Job.
+
+Those are defined in ``routing.py``::
+
+    path=r'^/job-user/$'
+    path=r'^/job-log/(?P<job_pk>[0-9]+)/$'    
+
+The ``example`` app comes with the Live Job Status and Live Log examples. See::
+    
+    # Jobs
+    http://127.0.0.1:8000/example/
+    # Job 123 Log
+    http://127.0.0.1:8000/logs/123/
+
+Both files::
+
+    django-remote-submission/example/templates/example_job_status.html
+    django-remote-submission/example/templates/example_job_log.html
+
+Have the client side web socket code to interact with the ``django-remote-submission`` app.
+Also to include the Live information on a web app it is worth looking at the celery configuration:
+`/home/rhf/git/django-remote-submission/example/server/celery.py`
+and the WebSockets rooting:
+/home/rhf/git/django-remote-submission/example/server/routing.py
 
 =============================
 Useful notes

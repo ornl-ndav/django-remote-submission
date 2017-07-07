@@ -25,10 +25,10 @@ from .views import (
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', IndexView.as_view(), name='index'),
-    #
+    # Login
     url(r'^accounts/login/$', auth_views.login, {'template_name': 'login.html'}, name='login'),
     url(r'^logout/$', auth_views.logout, {'template_name': 'logged_out.html'}, name='logout'),
-    #
+    # Live job status
     url(r'^example/$', ExampleJobStatusView.as_view(), name='example'),
     url(r'^logs/(?P<job_pk>[0-9]+)/$', ExampleJobLogView.as_view(), name='logs'),
     url(r'^servers/$', ServerList.as_view(), name='server-list'),

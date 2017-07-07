@@ -1,16 +1,20 @@
 {% extends "base.html" %}
 
 {% block content %}
-<button class="btn btn-default" id="example-create-job">Create Job</button>
-<table class="table">
-  <thead>
-    <th>ID</th>
-    <th>Title</th>
-    <th>Status</th>
-    <th>Modified</th>
-  </thead>
-  <tbody id="example-job-status-rows"></tbody>
-</table>
+<div class="container">
+  <h1>List of Jobs</h1>
+  <button class="btn btn-warning" id="example-create-job">Create a Test Job</button>
+  <table class="table">
+    <thead>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Status</th>
+      <th>Modified</th>
+      <th>See log...</th>
+    </thead>
+    <tbody id="example-job-status-rows"></tbody>
+  </table>
+</div>
 
 <script src="https://cdn.rawgit.com/joewalnes/reconnecting-websocket/fd7c819bb15eeee3452c17e317c0a3664c442965/reconnecting-websocket.min.js"></script>
 <script>
@@ -57,10 +61,14 @@ socket.onmessage = function(e) {
       ).append(
         $('<td>').text('' + title)
       ).append(
-        $('<td>').text('' + status)
+        $('<td>').append('<span class="label label-' + status + '">' + status + '</span>')
       ).append(
-        $('<td>').text('' + modified)
-      ),
+        $('<td>').text('' + new Date(modified).toLocaleString())
+      ).append(
+        $('<td>').append('<a href="' + "{% url 'logs' 999 %}".replace (999, job_id) +
+                   '" title="Click to see the log of this Job."><span class="glyphicon glyphicon-tasks" aria-hidden="true"></span> ' +
+                   title + '</a>')
+      );
       found = false;
 
   trs.each((i, el) => {
