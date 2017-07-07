@@ -192,9 +192,12 @@ Both files::
 
 Have the client side web socket code to interact with the ``django-remote-submission`` app.
 Also to include the Live information on a web app it is worth looking at the celery configuration:
-`/home/rhf/git/django-remote-submission/example/server/celery.py`
+
+``django-remote-submission/example/server/celery.py``
+
 and the WebSockets rooting:
-/home/rhf/git/django-remote-submission/example/server/routing.py
+
+``django-remote-submission/example/server/routing.py``
 
 =============================
 Useful notes
