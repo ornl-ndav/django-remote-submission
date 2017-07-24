@@ -119,3 +119,6 @@ dump.rdb
 
 /media
 /example/results/
+
+*.bak
+

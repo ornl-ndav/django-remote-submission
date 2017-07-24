@@ -1,0 +1,37 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": [
+    {
+      "@id": "0000-0002-6269-7881",
+      "@type": "Person",
+      "email": "thobson2@vols.utk.edu",
+      "name": "Tanner Hobson",
+      "affiliation": "Oak Ridge National Laboratory"
+    },
+    {
+      "@id": "0000-0002-9931-8304",
+      "@type": "Person",
+      "email": "ferrazlealrm@ornl.gov",
+      "name": "Ricardo M. Ferraz Leal",
+      "affiliation": "Oak Ridge National Laboratory"
+    },
+    {
+      "@id": "0000-0002-5560-6478",
+      "@type": "Person",
+      "email": "doucetm@ornl.gov",
+      "name": "Mathieu Doucet",
+      "affiliation": "Oak Ridge National Laboratory"
+    }
+  ],
+  "identifier": "",
+  "codeRepository": "https://github.com/ornl-ndav/django-remote-submission",
+  "datePublished": "2017-07-24",
+  "dateModified": "2017-07-24",
+  "dateCreated": "2017-07-24",
+  "description": "A Django application to manage long running job submission, including starting the job, saving logs, and storing results.",
+  "keywords": "django, job submission, batch scheduling",
+  "license": "ISC",
+  "title": "Django Remote Submission",
+  "version": "v0.11.1"
+}
