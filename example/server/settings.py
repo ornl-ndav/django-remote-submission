@@ -205,7 +205,7 @@ LOGGING = {
         'django_remote_submission': {
             'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'celery': {
             'handlers': ['console'],

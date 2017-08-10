@@ -13,5 +13,8 @@ paramiko>=2.0.2
 # Library to help manage python 2/3 compatibility
 six>=1.10.0
 
+# Celery
+celery>=4.1
+
 # Add websocket connections to Django
 channels

@@ -10,7 +10,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 import collections
 import fnmatch
 import io
-import logging
 import os
 import os.path
 import select
@@ -27,7 +26,8 @@ from paramiko.client import AutoAddPolicy, SSHClient
 from .models import Interpreter, Job, Log, Result
 from .remote import RemoteWrapper
 
-logger = logging.getLogger(__name__)
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
 
 
 try:
