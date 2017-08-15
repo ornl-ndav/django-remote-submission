@@ -145,6 +145,17 @@ Launch Celery::
     cd example
     celery -A server.celery worker --loglevel=info
 
+Set the ``example/.env`` file. Copy or remane ``example/.env.base`` and fill in the details of the remote machine where ``sshd`` is running ::
+
+    EXAMPLE_PYTHON_PATH
+    EXAMPLE_PYTHON_ARGUMENTS
+    EXAMPLE_SERVER_HOSTNAME
+    EXAMPLE_SERVER_PORT
+    EXAMPLE_REMOTE_DIRECTORY
+    EXAMPLE_REMOTE_FILENAME
+    EXAMPLE_REMOTE_USER
+    EXAMPLE_REMOTE_PASSWORD
+
 Launch Django::
 
     cd example
@@ -156,11 +167,11 @@ Launch Django::
     ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py loaddata fixtures/initial_data.json
-    # You may want to create a user:
+    # You may want to create another user:
     # python manage.py createsuperuser
     ./manage.py runserver
 
-Open in the browser one of the links below. The password for admin is ``admin123``::
+Open in the browser one of the links below. The password for admin is ``admin123`` unless you prefer to use the created password::
 
     # For the Admin Interface
     http://localhost:8000/admin/
