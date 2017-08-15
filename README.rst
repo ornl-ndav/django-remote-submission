@@ -150,6 +150,9 @@ Launch Django::
     cd example
     # Note that there's a requirements file in this folder!
     # Install it in a virtual environment!
+    # virtualenv venv
+    # source venv/bin/activate
+    # pip install -r requirements.txt
     ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py loaddata fixtures/initial_data.json
