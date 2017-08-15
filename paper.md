@@ -29,4 +29,11 @@ To run the jobs in background, DRS takes advantage of Celery [@Celery], a powerf
 
 In addition DRS provides real time monitoring of the progress of Jobs and associated logs. Through the Django Channels project [@Channels], and the usage of Web Sockets, it is possible to asynchronously display the Job Status and the live Job output (standard output and standard error) on a web page.
 
+# Practical case
+
+The Liquids Reflectometer (LR) at the Oak Ridge National Laboratory’s Spallation Neutron Source (SNS) [@Mason2006] provides neutron reflectivity capability for an average of about 30 experiments each year. In recent years, there has been a large effort to streamline the data processing and analysis for the instrument. While much of the data reduction can be automated, data analysis remains something that needs to be done by scientists. 
+With this in mind, the Reflectivity Fitting Web Interface has been developed [@doucet2017]. It provides a smooth data analysis interface, capturing the process of setting up and executing fits while reducing the need for installing software or writing Python scripts.
+
+Currently the fitting routines are written for the software package REFL1D [@Kienzle]. The management of the fitting routines is performed with the DRS. The DRS transparently submits the jobs to a cluster and provides real-time monitoring of the remote jobs and their associated logs. The user can thus track the status of the jobs and eventually inspect the associated logs. If the job was successful, DRS gathers the output data, transfer them to the webserver, and provides visualization tools for the fit of the reflectivity data.
+
 # References
