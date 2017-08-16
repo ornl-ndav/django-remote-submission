@@ -136,15 +136,6 @@ Running tests independtely, e.g.::
 Running the Example
 =============================
 
-Launch Redis::
-
-    redis-server
-
-Launch Celery::
-
-    cd example
-    celery -A server.celery worker --loglevel=info
-
 Set the ``example/.env`` file. Copy or remane ``example/.env.base`` and fill in the details of the remote machine where ``sshd`` is running ::
 
     EXAMPLE_PYTHON_PATH
@@ -156,14 +147,24 @@ Set the ``example/.env`` file. Copy or remane ``example/.env.base`` and fill in 
     EXAMPLE_REMOTE_USER
     EXAMPLE_REMOTE_PASSWORD
 
+Set up the example's virtualenv::
+
+    virtualenv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+
+Launch Redis::
+
+    redis-server
+
+Launch Celery::
+
+    cd example
+    celery -A server.celery worker --loglevel=info
+
 Launch Django::
 
     cd example
-    # Note that there's a requirements file in this folder!
-    # Install it in a virtual environment!
-    # virtualenv venv
-    # source venv/bin/activate
-    # pip install -r requirements.txt
     ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py loaddata fixtures/initial_data.json
