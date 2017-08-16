@@ -136,16 +136,7 @@ Running tests independtely, e.g.::
 Running the Example
 =============================
 
-Launch Redis::
-
-    redis-server
-
-Launch Celery::
-
-    cd example
-    celery -A server.celery worker --loglevel=info
-
-Set the ``example/.env`` file. Copy or rename ``example/.env.base`` and fill in the details of the remote machine where ``sshd`` is running ::
+Set the ``example/.env`` file. Copy or rename ``example/.env.base`` and fill in the details of the remote machine where the ``sshd`` server is running ::
 
     EXAMPLE_PYTHON_PATH
     EXAMPLE_PYTHON_ARGUMENTS
@@ -156,14 +147,24 @@ Set the ``example/.env`` file. Copy or rename ``example/.env.base`` and fill in 
     EXAMPLE_REMOTE_USER
     EXAMPLE_REMOTE_PASSWORD
 
+Set up the example's virtualenv::
+
+    virtualenv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+
+Launch Redis::
+
+    redis-server
+
+Launch Celery::
+
+    cd example
+    celery -A server.celery worker --loglevel=info
+
 Launch Django::
 
     cd example
-    # Note that there's a requirements file in this folder!
-    # Install it in a virtual environment!
-    # virtualenv venv
-    # source venv/bin/activate
-    # pip install -r requirements.txt
     ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py loaddata fixtures/initial_data.json
@@ -185,7 +186,7 @@ Open in the browser one of the links below. The password for admin is ``admin123
 Web Interface
 =============================
 
-The app provides two web sockets (SSE) to see in real time the Job Status and the Log associated to a Job.
+The app provides two web sockets to see in real time the Job Status and the Log associated to a Job.
 
 Those are defined in ``routing.py``::
 
@@ -209,7 +210,7 @@ Also to include the Live information on a web app it is worth looking at the cel
 
 ``django-remote-submission/example/server/celery.py``
 
-and the WebSockets rooting:
+and the WebSockets routing:
 
 ``django-remote-submission/example/server/routing.py``
 
