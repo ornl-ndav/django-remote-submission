@@ -13,13 +13,29 @@ Django Remote Submission
 
 A Django application to manage long running job submission, including starting the job, saving logs, and storing results.
 
+Features
+--------
+
+* Able to connect to any server via SSH user/password or key-based authentication.
+
+* Able to transfer and launch any script in the remote server (e.g. python or bash scripts).
+
+* Able to capture and receive logs and write them to a database in realtime.
+
+* Able to return any modified files from the remote server.
+
+* Uses WebSockets to notify the Web Client of the Job status: ``initial``, ``submitted``, ``success`` or ``failure``.
+
+* Uses WebSockets to provide Job Log (standard output and standard error) in real time to the Web Client.
+
 Documentation
 -------------
 
 The full documentation is at https://django-remote-submission.readthedocs.org.
 
+==========
 Quickstart
-----------
+==========
 
 Install Django Remote Submission::
 
@@ -95,21 +111,10 @@ And it can be deleted once the session is finished:
         public_key_filename=None,
     )
 
-Features
---------
 
-* Able to connect to any server via password-authenticated SSH.
-
-* Able to receive logs and write them to a database in realtime.
-
-* Able to return any modified files from the remote server.
-
-* Uses Server Side Events (SSE) to notify the Web Client the Job status
-
-* Uses WebSockets / SSE to provide Job Log in real time to a Web Client
-
-Running Tests
---------------
+=================
+Running the Tests
+=================
 
 Does the code actually work?
 
@@ -132,11 +137,11 @@ Running tests independtely, e.g.::
     pytest -v tests/test_models.py
     pytest -v tests/test_models.py::test_server_string_representation
 
-=============================
+===================
 Running the Example
-=============================
+===================
 
-Set the ``example/.env`` file. Copy or rename ``example/.env.base`` and fill in the details of the remote machine where the ``sshd`` server is running ::
+Set the ``example/.env`` file. Copy or rename ``example/.env.base`` and fill in the details of the remote machine where the ``sshd`` server is running::
 
     EXAMPLE_PYTHON_PATH
     EXAMPLE_PYTHON_ARGUMENTS
@@ -181,10 +186,9 @@ Open in the browser one of the links below. The password for admin is ``admin123
     # To test Job creation with live status update
     http://127.0.0.1:8000/example/
 
-
-=============================
+=============
 Web Interface
-=============================
+=============
 
 The app provides two web sockets to see in real time the Job Status and the Log associated to a Job.
 
@@ -214,9 +218,9 @@ and the WebSockets routing:
 
 ``django-remote-submission/example/server/routing.py``
 
-=============================
+============
 Useful notes
-=============================
+============
 
 The Results files are stored in MEDIA. So add to your setings something similar to:
 
@@ -234,8 +238,9 @@ To make media available in DEBUG mode, you might want to add to the main ``urls.
 	    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
+=======
 Credits
----------
+=======
 
 Tools used in rendering this package:
 

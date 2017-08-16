@@ -17,4 +17,4 @@ six>=1.10.0
 celery>=4.1
 
 # Add websocket connections to Django
-channels
+channels>=1.1.6

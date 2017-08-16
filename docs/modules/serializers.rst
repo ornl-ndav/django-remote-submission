@@ -1,5 +1,5 @@
 Serializers
-======
+===========
 
 .. automodule:: django_remote_submission.serializers
 

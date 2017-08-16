@@ -9,7 +9,7 @@ There are a few steps for testing the library.
 
 
 Install Dependencies
-------
+--------------------
 
 In order to run the tests, the dependencies need to be installed. To do this,
 run these commands
@@ -23,7 +23,7 @@ run these commands
 .. _modify-settings-for-testing:
 
 Modify Settings
-------
+---------------
 
 Then copy ``.env.base`` to ``.env`` and edit the file. For example, the default
 ``.env.base`` file right now is:
@@ -32,7 +32,7 @@ Then copy ``.env.base`` to ``.env`` and edit the file. For example, the default
    :code: sh
 
 Run Tests
--------
+---------
 
 To run the tests on your current Python version, use the target ``test``. To
 run tests on multiple Python versions, use the target ``test-all``.
