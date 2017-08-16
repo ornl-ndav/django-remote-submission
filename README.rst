@@ -185,7 +185,7 @@ Open in the browser one of the links below. The password for admin is ``admin123
 Web Interface
 =============================
 
-The app provides two web sockets (SSE) to see in real time the Job Status and the Log associated to a Job.
+The app provides two web sockets to see in real time the Job Status and the Log associated to a Job.
 
 Those are defined in ``routing.py``::
 
@@ -209,7 +209,7 @@ Also to include the Live information on a web app it is worth looking at the cel
 
 ``django-remote-submission/example/server/celery.py``
 
-and the WebSockets rooting:
+and the WebSockets routing:
 
 ``django-remote-submission/example/server/routing.py``
 
