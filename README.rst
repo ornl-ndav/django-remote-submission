@@ -145,7 +145,7 @@ Launch Celery::
     cd example
     celery -A server.celery worker --loglevel=info
 
-Set the ``example/.env`` file. Copy or remane ``example/.env.base`` and fill in the details of the remote machine where ``sshd`` is running ::
+Set the ``example/.env`` file. Copy or rename ``example/.env.base`` and fill in the details of the remote machine where ``sshd`` is running ::
 
     EXAMPLE_PYTHON_PATH
     EXAMPLE_PYTHON_ARGUMENTS
