@@ -183,7 +183,6 @@ def wrapper_cls(request):
         def __init__(self, *args, **kwargs):
             super(LocalWrapper, self).__init__(*args, **kwargs)
             self.workdir = os.getcwd()
-            print(dir(self))
 
         def connect(self, *args, **kwargs):
             return self
