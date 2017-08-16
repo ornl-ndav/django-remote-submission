@@ -1,6 +1,6 @@
-"""Provides a wrapper to mimick the remote but runs in local.
+"""Provides a wrapper around Paramiko to simplify the API.
 
-This module is meant to be a general wrapper so that a ``LocalWrapper`` can
+This module is meant to be a general wrapper so other wrappers can
 also be created to run tests in continuous integration services where SSH is
 not available.
 
@@ -28,31 +28,86 @@ import six
 logger = logging.getLogger(__name__)
 
 
-class LocalWrapper(object):
+class RemoteWrapper(object):
+    """
+    Wrapper around Paramiko which simplifies the remote connection API.
     """
 
-    """
-
-    def __init__(self, hostname, username, port=None):
+    def __init__(self, hostname, username, port=22):
         """Initialize the wrapper.
+
+        :param str hostname: the hostname of the server to connect to
+        :param str username: the username of the user on the remote server
+        :param int port: the SSH port to connect to
+
         """
-        pass
+        self.hostname = hostname
+        self.username = username
+        self.port = port
+
+        self._client = None
+        """The Paramiko Client instance"""
+
+        self._sftp = None
+        """The Paramiko SFTP instance"""
+
+        self._public_key_filename = None
+        """The Public key passed as parameter"""
+
+    def __enter__(self):
+        """Allow the use of ``with wrapper:``."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Allow the use of ``with wrapper:``."""
+        self.close()
 
     def connect(self, password=None, public_key_filename=None):
+        """Connect to the remote host with the given password and public key.
+
+        Meant to be used like::
+
+            with wrapper.connect(password='password0'):
+                pass
+
+        :param str password: the password of the user on the remote server
+        :param str public_key_filename: the file containing the public key
+
         """
-        """
-        pass
+        # DO NOT FIND THE PUBLIC KEY!
+        # if public_key_filename is None:
+        #     public_key_filename = os.path.expanduser('~/.ssh/id_rsa.pub')
+
+        self._public_key_filename = public_key_filename
+        self._client = self._start_client(password, public_key_filename)
+        self._sftp = self._client.open_sftp()
+        return self
 
     def close(self):
-        pass
+        """Close any open connections and clear their attributes."""
+        self._sftp.close()
+        self._sftp = None
 
-    def chdir(self, local_directory):
+        self._client.close()
+        self._client = None
+
+    def chdir(self, remote_directory):
+        """Change directories to the remote directory.
+
+        :param str remote_directory: the directory to change to
+
         """
-        """
-        os.chdir(local_directory)
+        self._sftp.chdir(remote_directory)
 
     def open(self, filename, mode):
-        pass
+        """Open a file from the last used remote directory.
+
+        :param str filename: the name of the file to open
+        :param str mode: the mode to use to open the file (see :func:`file`'s
+            documentation for more information)
+
+        """
+        return self._sftp.open(filename, mode)
 
     def listdir_attr(self):
         """Retrieve a list of files and their attributes.
@@ -62,15 +117,7 @@ class LocalWrapper(object):
         seconds.
 
         """
-        class T(object):
-            def __init__(self, filename, st_mtime):
-                self.filename = filename
-                self.st_mtime = st_mtime
-            
-        filenames = os.listdir('.')
-        res = [T(filename, os.stat(filename).st_mtime)
-               for filename in filenames]
-        return res
+        return self._sftp.listdir_attr()
 
 
     def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
