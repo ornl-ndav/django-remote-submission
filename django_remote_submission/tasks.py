@@ -24,7 +24,7 @@ from paramiko import AuthenticationException, BadHostKeyException
 from paramiko.client import AutoAddPolicy, SSHClient
 
 from .models import Interpreter, Job, Log, Result
-from .remote import RemoteWrapper
+from .wrapper.remote import RemoteWrapper
 
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)

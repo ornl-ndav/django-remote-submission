@@ -7,7 +7,7 @@ Modules Reference
 
    modules/models
    modules/tasks
-   modules/remote
+   modules/wrapper
    modules/serializers
    modules/urls
    modules/views

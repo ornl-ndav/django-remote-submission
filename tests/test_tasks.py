@@ -14,7 +14,8 @@ import textwrap
 import os
 import logging
 import sys
-from django_remote_submission.remote import RemoteWrapper
+from django_remote_submission.wrapper.remote import RemoteWrapper
+from django_remote_submission.wrapper.local import LocalWrapper
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
@@ -169,84 +170,13 @@ def job_model_saved(mocker):
     pre_save.disconnect(mock, sender=Job)
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture(params=[True, False], ids=["LocalWrapper", "RemoteWrapper"])
 def wrapper_cls(request):
-    from django_remote_submission.remote import RemoteWrapper
-    import os
-    import os.path
-    import select
-    from subprocess import Popen, PIPE
-    from collections import namedtuple
-    from django.utils.timezone import now
-
-    class LocalWrapper(RemoteWrapper):
-        def __init__(self, *args, **kwargs):
-            super(LocalWrapper, self).__init__(*args, **kwargs)
-            self.workdir = os.getcwd()
-
-        def connect(self, *args, **kwargs):
-            return self
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args, **kwargs):
-            pass
-
-        def close(self, *args, **kwargs):
-            pass
-
-        def chdir(self, remote_directory):
-            self.workdir = os.path.join(self.workdir, remote_directory)
-
-        def open(self, filename, mode):
-            return open(os.path.join(self.workdir, filename), mode)
-
-        def listdir_attr(self):
-            Attr = namedtuple('Attr', ['filename', 'st_mtime'])
-
-            results = []
-            for filename in os.listdir(self.workdir):
-                stat = os.stat(os.path.join(self.workdir, filename))
-
-                results.append(Attr(
-                    filename=filename,
-                    st_mtime=stat.st_mtime,
-                ))
-
-            return results
-
-        def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
-                         stderr_handler=None):
-            if timeout is not None:
-                args = ['timeout', '{}s'.format(timeout.total_seconds())] + args
-
-            print('{!r}'.format(args))
-            process = Popen(args, bufsize=1, stdout=PIPE, stderr=PIPE,
-                            cwd=self.workdir, universal_newlines=True)
-
-            rlist = [process.stdout, process.stderr]
-
-            print('before loop')
-            while process.poll() is None:
-                ready, _, _ = select.select(rlist, [], [])
-
-                current_time = now()
-                if process.stdout in ready:
-                    stdout = process.stdout.readline()
-
-                    if stdout != '':
-                        stdout_handler(current_time, stdout)
-
-                if process.stderr in ready:
-                    stderr = process.stderr.readline()
-
-                    if stderr != '':
-                        stderr_handler(current_time, stderr)
-
-            print('after loop')
-
-            return process.returncode == 0
+    '''
+    params == True: return LocalWrapper
+    params == False: return RemoteWrapper
+    if it's running with command line paramter '--ci' skip it
+    '''
 
     if request.param:
         # return RemoteWrapper
@@ -549,11 +479,10 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
 
 @pytest.mark.skipif(
     pytest.config.getoption('--ci'),
-    reason='Does not work on ci',
+    reason='Does not work on continuous integration.',
 )
 @pytest.mark.django_db
 def test_delete_key_old_way(env):
-    from django_remote_submission.remote import RemoteWrapper
 
     # if pytest.config.getoption('--ci'):
     #     pytest.skip('does not work in CI environments')
@@ -580,7 +509,7 @@ def test_delete_key_old_way(env):
 
 @pytest.mark.skipif(
     pytest.config.getoption('--ci'),
-    reason='Does not work on ci',
+    reason='Does not work on continuous integration.',
 )
 @pytest.mark.django_db
 def test_deploy_and_delete_key(env, wrapper_cls=RemoteWrapper):
