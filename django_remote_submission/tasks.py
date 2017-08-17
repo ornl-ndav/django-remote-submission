@@ -25,6 +25,7 @@ from paramiko.client import AutoAddPolicy, SSHClient
 
 from .models import Interpreter, Job, Log, Result
 from .wrapper.remote import RemoteWrapper
+from .wrapper.local import LocalWrapper
 
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
@@ -217,7 +218,7 @@ class LogContainer(object):
 @shared_task
 def submit_job_to_server(job_pk, password=None, public_key_filename=None, username=None,
                          timeout=None, log_policy=LogPolicy.LOG_LIVE,
-                         store_results=None, wrapper_cls=RemoteWrapper):
+                         store_results=None, remote=True):
     """Submit a job to the remote server.
 
     This can be used as a Celery task, if the library is installed and running.
@@ -230,9 +231,12 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
     :param datetime.timedelta timeout: the timeout for running the job
     :param LogPolicy log_policy: the policy to use for logging
     :param list(str) store_results: the patterns to use for the results to store
-    :param class wrapper_cls: the class constructor to connect to a remote host
+    :param bool remote: Either runs this task locally on the host or in a remote server.
 
     """
+
+    wrapper_cls = RemoteWrapper if remote else LocalWrapper
+
     job = Job.objects.get(pk=job_pk)
 
     if username is None:
@@ -315,7 +319,7 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
 @shared_task
 def copy_key_to_server(username, password, hostname, port=22,
                        public_key_filename=None,
-                       wrapper_cls=RemoteWrapper):
+                       remote=True):
     """Copy the client key to the remote server so the next connections
     do not need the password any further
 
@@ -326,10 +330,12 @@ def copy_key_to_server(username, password, hostname, port=22,
     :param str hostname: The hostname used to connect to the server
     :param int port: The port to connect to for SSH (usually 22)
     :param public_key_filename: the path where it is.
-    :param class wrapper_cls: the class constructor to connect to a remote host
+    :param bool remote: Either runs this task locally on the host or in a remote server.
 
     """
-   
+    
+    wrapper_cls = RemoteWrapper if remote else LocalWrapper
+
     wrapper = wrapper_cls(
         hostname=hostname,
         username=username,
@@ -348,7 +354,7 @@ def copy_key_to_server(username, password, hostname, port=22,
 @shared_task
 def delete_key_from_server(username, password, hostname, port=22,
                            public_key_filename=None,
-                           wrapper_cls=RemoteWrapper):
+                           remote=True):
     """Delete the client key from the remote server so the next connections
     will need password. This can be used at the logout of the session.
 
@@ -359,10 +365,12 @@ def delete_key_from_server(username, password, hostname, port=22,
     :param str hostname: The hostname used to connect to the server
     :param int port: The port to connect to for SSH (usually 22)
     :param public_key_filename: the path where it is.
-    :param class wrapper_cls: the class constructor to connect to a remote host
+    :param bool remote: Either runs this task locally on the host or in a remote server.
 
     """
    
+    wrapper_cls = RemoteWrapper if remote else LocalWrapper
+
     wrapper = wrapper_cls(
         hostname=hostname,
         username=username,

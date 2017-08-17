@@ -12,13 +12,7 @@ import collections
 import pytest
 import textwrap
 import os
-import logging
 import sys
-from django_remote_submission.wrapper.remote import RemoteWrapper
-from django_remote_submission.wrapper.local import LocalWrapper
-
-
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 
 def pairwise(iterable):
@@ -170,21 +164,21 @@ def job_model_saved(mocker):
     pre_save.disconnect(mock, sender=Job)
 
 
-@pytest.fixture(params=[True, False], ids=["LocalWrapper", "RemoteWrapper"])
-def wrapper_cls(request):
+@pytest.fixture(params=[True, False], ids=["Remote", "Local"])
+def runs_remotely(request):
     '''
-    params == True: return LocalWrapper
-    params == False: return RemoteWrapper
+    params == True: Uses RemoteWrapper
+    params == False: Uses LocalWrapper
     if it's running with command line paramter '--ci' skip it
     '''
 
-    if request.param:
+    if not request.param:
         # return RemoteWrapper
-        return LocalWrapper
+        return False
     elif pytest.config.getoption('--ci'):
         pytest.skip('running on continuous integration')
     else:
-        return RemoteWrapper
+        return True
 
 
 @pytest.mark.django_db
@@ -195,12 +189,12 @@ for i in range(5):
     print("line: {}".format(i))
     time.sleep(0.1)
 ''')
-def test_submit_job_normal_usage(env, job, job_model_saved, wrapper_cls):
+def test_submit_job_normal_usage(env, job, job_model_saved, runs_remotely):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
     import datetime
 
-    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls)
+    submit_job_to_server(job.pk, env.remote_password, remote=runs_remotely)
 
     job = Job.objects.get(pk=job.pk)
     assert job.status == Job.STATUS.success
@@ -228,12 +222,12 @@ for i in range(5):
     print("line: {}".format(i), file=sys.stdout if i % 2 == 0 else sys.stderr)
     time.sleep(0.1)
 ''')
-def test_submit_job_multiple_streams(env, job, wrapper_cls):
+def test_submit_job_multiple_streams(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
     import datetime
 
-    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls)
+    submit_job_to_server(job.pk, env.remote_password, remote=runs_remotely)
 
     assert Log.objects.count() == 5
 
@@ -256,11 +250,11 @@ def test_submit_job_multiple_streams(env, job, wrapper_cls):
 import sys
 sys.exit(1)
 ''')
-def test_submit_job_failure(env, job, wrapper_cls):
+def test_submit_job_failure(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
 
-    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls)
+    submit_job_to_server(job.pk, env.remote_password, remote=runs_remotely)
 
     job = Job.objects.get(pk=job.pk)
     assert job.status == Job.STATUS.failure
@@ -275,11 +269,11 @@ for i in range(5):
     print('line: {}'.format(i), file=sys.stdout)
     time.sleep(0.1)
 ''')
-def test_submit_job_log_policy_log_total(env, job, wrapper_cls):
+def test_submit_job_log_policy_log_total(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
-    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls,
+    submit_job_to_server(job.pk, env.remote_password, remote=runs_remotely,
                          log_policy=LogPolicy.LOG_TOTAL)
 
     assert Log.objects.count() == 1
@@ -297,11 +291,11 @@ for i in range(5):
     print('line: {}'.format(i), file=sys.stdout)
     time.sleep(0.1)
 ''')
-def test_submit_job_log_policy_log_none(env, job, wrapper_cls):
+def test_submit_job_log_policy_log_none(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
 
-    submit_job_to_server(job.pk, env.remote_password, wrapper_cls=wrapper_cls,
+    submit_job_to_server(job.pk, env.remote_password, remote=runs_remotely,
                          log_policy=LogPolicy.LOG_NONE)
 
     assert Log.objects.count() == 0
@@ -316,13 +310,13 @@ for i in range(5):
     print('line: {}'.format(i))
     time.sleep(0.35)
 ''')
-def test_submit_job_timeout(env, job, wrapper_cls):
+def test_submit_job_timeout(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import datetime
 
     submit_job_to_server(job.pk, env.remote_password,
-                         wrapper_cls=wrapper_cls,
+                         remote=runs_remotely,
                          timeout=datetime.timedelta(seconds=1))
 
     assert Log.objects.count() == 3
@@ -341,13 +335,13 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files(env, job, wrapper_cls):
+def test_submit_job_modified_files(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log, Result
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import re
 
     results = submit_job_to_server(job.pk, env.remote_password,
-                                   wrapper_cls=wrapper_cls)
+                                   remote=runs_remotely)
 
     assert len(results) == 5
     assert sorted(results.keys()) == \
@@ -377,13 +371,13 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files_positive_pattern(env, job, wrapper_cls):
+def test_submit_job_modified_files_positive_pattern(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log, Result
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import re
 
     results = submit_job_to_server(job.pk, env.remote_password,
-                                   wrapper_cls=wrapper_cls,
+                                   remote=runs_remotely,
                                    store_results=['0.txt', '[12].txt'])
 
     assert len(results) == 3
@@ -408,13 +402,13 @@ for i in range(5):
         print('line: {}'.format(i), file=f)
     time.sleep(0.1)
 ''')
-def test_submit_job_modified_files_negative_pattern(env, job, wrapper_cls):
+def test_submit_job_modified_files_negative_pattern(env, job, runs_remotely):
     from django_remote_submission.models import Job, Log, Result
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import re
 
     results = submit_job_to_server(job.pk, env.remote_password,
-                                   wrapper_cls=wrapper_cls,
+                                   remote=runs_remotely,
                                    store_results=['*', '![34].txt'])
 
     assert len(results) == 3
@@ -430,7 +424,7 @@ def test_submit_job_modified_files_negative_pattern(env, job, wrapper_cls):
 
 
 @pytest.mark.django_db
-def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
+def test_submit_job_deploy_key(env, job_gen, interpreter_gen, runs_remotely):
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server, LogPolicy
     import os.path
@@ -464,7 +458,7 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     )
 
     submit_job_to_server(remove_existing_key_job.pk, env.remote_password,
-                         wrapper_cls=wrapper_cls)
+                         remote=runs_remotely)
 
     add_key_job = job_gen(
         program='''\
@@ -474,7 +468,7 @@ def test_submit_job_deploy_key(env, job_gen, interpreter_gen, wrapper_cls):
     )
 
     submit_job_to_server(add_key_job.pk, env.remote_password,
-                         wrapper_cls=wrapper_cls)
+                         remote=runs_remotely)
 
 
 @pytest.mark.skipif(
@@ -487,6 +481,7 @@ def test_delete_key_old_way(env):
     # if pytest.config.getoption('--ci'):
     #     pytest.skip('does not work in CI environments')
 
+    from django_remote_submission.wrapper.remote import RemoteWrapper
     wrapper = RemoteWrapper(
         hostname=env.server_hostname,
         username=env.remote_user,
@@ -512,7 +507,7 @@ def test_delete_key_old_way(env):
     reason='Does not work on continuous integration.',
 )
 @pytest.mark.django_db
-def test_deploy_and_delete_key(env, wrapper_cls=RemoteWrapper):
+def test_deploy_and_delete_key(env):
     '''
     This is the new way of deploying and deleting the private key
     '''
@@ -520,6 +515,7 @@ def test_deploy_and_delete_key(env, wrapper_cls=RemoteWrapper):
         copy_key_to_server,
         delete_key_from_server
     )
+    from django_remote_submission.wrapper.remote import RemoteWrapper
 
     copy_key_to_server(
         username=env.remote_user,
@@ -527,11 +523,11 @@ def test_deploy_and_delete_key(env, wrapper_cls=RemoteWrapper):
         hostname=env.server_hostname,
         port=env.server_port,
         public_key_filename=None,
-        wrapper_cls=wrapper_cls,
+        remote=runs_remotely,
     )
     # This wrapper is just for testing
     # Note that no password is passed!
-    wrapper = wrapper_cls(
+    wrapper = RemoteWrapper(
         hostname=env.server_hostname,
         username=env.remote_user,
         port=env.server_port,
@@ -547,7 +543,7 @@ def test_deploy_and_delete_key(env, wrapper_cls=RemoteWrapper):
         hostname=env.server_hostname,
         port=env.server_port,
         public_key_filename=None,
-        wrapper_cls=wrapper_cls,
+        remote=runs_remotely,
     )
 
     with pytest.raises(ValueError, message="incorrect public key"):
