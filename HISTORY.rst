@@ -3,6 +3,11 @@
 History
 -------
 
+0.13.0 (2017-08-17)
++++++++++++++++++++
+
+* LocalWrapper and RemoteWrapper are in the wrapper package.
+
 0.12.0 (2017-08-16)
 +++++++++++++++++++
 
