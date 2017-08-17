@@ -1,20 +1,8 @@
-# Web framework
-django>=1.9.6
-
-# Helpful utilities for creating models in Django
-django-model-utils>=2.0
-
-# Library to help manage REST APIs
-djangorestframework>=3.5
-
-# Library to manage connecting to remote hosts via SSH
-paramiko>=2.0.2
-
-# Library to help manage python 2/3 compatibility
-six>=1.10.0
-
-# Celery
-celery>=4.1
-
-# Add websocket connections to Django
-channels>=1.1.6
+# fetch specific dependencies
+# --no-index
+# --find-links .
+#
+# install package
+# NOTE: -e . for editable mode
+# .
+-e .
