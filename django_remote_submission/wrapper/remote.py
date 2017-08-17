@@ -6,24 +6,24 @@ not available.
 
 """
 
-from __future__ import absolute_import, unicode_literals, print_function
+from __future__ import absolute_import, print_function, unicode_literals
+
+import datetime
 import logging
 import os
 import textwrap
-import datetime
 import uuid
+
+import six
+from django.utils.timezone import now
+from paramiko import AuthenticationException, BadHostKeyException
+from paramiko.client import AutoAddPolicy, SSHClient
 
 try:
     from shlex import quote as cmd_quote
 except ImportError:
     from pipes import quote as cmd_quote
 
-from paramiko import (
-    AuthenticationException, BadHostKeyException,
-)
-from paramiko.client import SSHClient, AutoAddPolicy
-from django.utils.timezone import now
-import six
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +194,8 @@ class RemoteWrapper(object):
                     port=server_port,
                     username=username,
                     password=password,
+                    timeout=5,
+                    
                 )
             except AuthenticationException as e:
                 logger.error("Authenctication error! Wrong password...")

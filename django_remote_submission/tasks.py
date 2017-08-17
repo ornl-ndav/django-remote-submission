@@ -23,19 +23,20 @@ from django.core.files import File
 from paramiko import AuthenticationException, BadHostKeyException
 from paramiko.client import AutoAddPolicy, SSHClient
 
-from .models import Interpreter, Job, Log, Result
-from .wrapper.remote import RemoteWrapper
-from .wrapper.local import LocalWrapper
-
 from celery.utils.log import get_task_logger
+
+from .models import Interpreter, Job, Log, Result
+from .wrapper.local import LocalWrapper
+from .wrapper.remote import RemoteWrapper
+
 logger = get_task_logger(__name__)
 
 
 try:
     from celery import shared_task
 except ImportError:
-    logger.info('Could not import Celery. '
-                'Tasks will not be implemented by Celery\'s queue.')
+    logger.warning('Could not import Celery. '
+                   'Tasks will not be implemented by Celery\'s queue.')
 
     def shared_task(func):
         """Naive wrapper in case Celery does not exist."""
@@ -234,6 +235,8 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
     :param bool remote: Either runs this task locally on the host or in a remote server.
 
     """
+
+    logger.debug("submit_job_to_server: %s", locals().keys())
 
     wrapper_cls = RemoteWrapper if remote else LocalWrapper
 

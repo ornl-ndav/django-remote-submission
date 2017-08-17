@@ -3,6 +3,11 @@
 History
 -------
 
+0.14.0 (2017-08-17)
++++++++++++++++++++
+
+* Tasks have an attribute to run locally or remotelly.
+
 0.13.0 (2017-08-17)
 +++++++++++++++++++
 

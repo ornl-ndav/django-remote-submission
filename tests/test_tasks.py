@@ -24,12 +24,6 @@ def pairwise(iterable):
     return zip(a, b)
 
 
-skip_if_ci = pytest.mark.skipif(
-    pytest.config.getoption('--ci'),
-    reason='some things do not work on ci',
-)
-
-
 EnvBase = collections.namedtuple('Env', [
     'server_hostname', 'server_port', 'remote_directory', 'remote_filename',
     'remote_user', 'remote_password', 'python_path', 'python_arguments',
