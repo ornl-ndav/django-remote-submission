@@ -8,7 +8,8 @@ Welcome to django-remote-submission's documentation!
 
 The ``django-remote-submission`` is an asynchronous task/job queue using `Celery Distributed Task Queue <http://www.celeryproject.org/>`_ and `Redis <https://redis.io/>`_ in-memory data structure store as message broker. 
 
-The ``django-remote-submission`` runs remotely and asynchronously any scripts and provides real time feedback to the client. Altought it can be called from in any python application, it is only used to its full extent when integrated in a `Django <https://www.djangoproject.com/>`_ web application.
+The ``django-remote-submission`` runs, remotely and asynchronously, any scripts and provides real time feedback to the client.
+Altought it can be called from any python application, it is only used to its full extent when integrated in a `Django <https://www.djangoproject.com/>`_ web application.
 
 Features
 --------

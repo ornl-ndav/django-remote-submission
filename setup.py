@@ -35,8 +35,8 @@ setup(
     version=version,
     description="""A Django application to manage long running job submission, including starting the job, saving logs, and storing results.""",
     long_description=readme + '\n\n' + history,
-    author='Tanner Hobson',
-    author_email='thobson125@gmail.com',
+    author='T. Hobson, M. Doucet and R. M. Ferraz Leal',
+    author_email='ferrazlealrm@ornl.gov',
     url='https://github.com/ornl-ndav/django-remote-submission',
     packages=[
         'django_remote_submission',
