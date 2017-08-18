@@ -91,13 +91,35 @@ class RemoteWrapper(object):
         self._client.close()
         self._client = None
 
+    def _mkdir_p(self, remote_directory):
+        """Change to this directory, recursively making new folders if needed.
+        Returns True if any folders were created.
+        Thanks: https://stackoverflow.com/questions/14819681/upload-files-\
+        using-sftp-in-python-but-create-directories-if-path-doesnt-exist"""
+        if remote_directory == '/':
+            # absolute path so change directory to root
+            self._sftp.chdir('/')
+            return
+        if remote_directory == '':
+            # top-level relative directory must exist
+            return
+        try:
+            self._sftp.chdir(remote_directory)  # sub-directory exists
+        except IOError:
+            dirname, basename = os.path.split(remote_directory.rstrip('/'))
+            self._mkdir_p(dirname)  # make parent directories
+            self._sftp.mkdir(basename)  # sub-directory missing, so created it
+            self._sftp.chdir(basename)
+            return True
+
     def chdir(self, remote_directory):
         """Change directories to the remote directory.
 
         :param str remote_directory: the directory to change to
 
         """
-        self._sftp.chdir(remote_directory)
+        self._mkdir_p(remote_directory)
+        # self._sftp.chdir(remote_directory)
 
     def open(self, filename, mode):
         """Open a file from the last used remote directory.

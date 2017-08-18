@@ -41,6 +41,12 @@ class LocalWrapper(RemoteWrapper):
         self.workdir = os.path.join(self.workdir, remote_directory)
 
     def open(self, filename, mode):
+        # create the directory + subdirectories in case they don't exist
+        try:
+            os.makedirs(self.workdir)
+        except FileExistsError:
+            # In case the directy(ies) exist
+            pass
         return open(os.path.join(self.workdir, filename), mode)
 
     def listdir_attr(self):
