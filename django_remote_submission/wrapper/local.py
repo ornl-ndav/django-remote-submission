@@ -46,7 +46,7 @@ class LocalWrapper(RemoteWrapper):
         # create the directory + subdirectories in case they don't exist
         try:
             os.makedirs(self.workdir)
-        except FileExistsError:
+        except OSError:
             # In case the directy(ies) exist
             pass
         return open(os.path.join(self.workdir, filename), mode)
