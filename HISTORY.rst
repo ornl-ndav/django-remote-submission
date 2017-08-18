@@ -2,6 +2,12 @@
 
 History
 -------
+
+1.1.0 (2017-08-18)
++++++++++++++++++++
+
+* Creates the remote directory if it does not exist.
+
 1.0.1 (2017-08-18)
 +++++++++++++++++++
 
