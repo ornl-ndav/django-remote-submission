@@ -94,8 +94,12 @@ class RemoteWrapper(object):
     def _mkdir_p(self, remote_directory):
         """Change to this directory, recursively making new folders if needed.
         Returns True if any folders were created.
+
         Thanks: https://stackoverflow.com/questions/14819681/upload-files-\
-        using-sftp-in-python-but-create-directories-if-path-doesnt-exist"""
+        using-sftp-in-python-but-create-directories-if-path-doesnt-exist
+        
+        :param str remote_directory: the directory to create
+        """
         if remote_directory == '/':
             # absolute path so change directory to root
             self._sftp.chdir('/')
@@ -169,7 +173,7 @@ class RemoteWrapper(object):
         chdir = self._make_command(['cd', workdir], None)
         run = self._make_command(args, timeout)
         command = '{} && {}'.format(chdir, run)
-        print('exec_command(command={!r})'.format(command))
+        logger.info('exec_command(command={!r})'.format(command))
 
         transport = self._client.get_transport()
         channel = transport.open_session()

@@ -13,7 +13,9 @@ from subprocess import Popen, PIPE
 from collections import namedtuple
 from django.utils.timezone import now
 from .remote import RemoteWrapper
+import logging
 
+logger = logging.getLogger(__name__)
 
 class LocalWrapper(RemoteWrapper):
     """
@@ -68,13 +70,13 @@ class LocalWrapper(RemoteWrapper):
         if timeout is not None:
             args = ['timeout', '{}s'.format(timeout.total_seconds())] + args
 
-        print('{!r}'.format(args))
+        logger.info('{!r}'.format(args))
         process = Popen(args, bufsize=1, stdout=PIPE, stderr=PIPE,
                         cwd=self.workdir, universal_newlines=True)
 
         rlist = [process.stdout, process.stderr]
 
-        print('before loop')
+        logger.debug('before loop')
         while process.poll() is None:
             ready, _, _ = select.select(rlist, [], [])
 
@@ -91,6 +93,6 @@ class LocalWrapper(RemoteWrapper):
                 if stderr != '':
                     stderr_handler(current_time, stderr)
 
-        print('after loop')
+        logger.debug('after loop')
 
         return process.returncode == 0
