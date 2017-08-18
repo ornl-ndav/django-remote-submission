@@ -83,6 +83,20 @@ Then use it in a project:
         password=request.POST.get('password'),
     )
 
+For testing, sometimes is useful to bypass the remote server and run the task in the local computer.
+For this, the ``submit_job_to_server`` routine can be called with the argument ``remote=False``.
+The function above would be:
+
+.. code:: python
+
+    modified_files = submit_job_to_server.delay(
+        job_pk=job.pk,
+        password=request.POST.get('password'),
+        remote=False,
+    )
+
+Note that it stills use Celery. It just ignores the password passed as argument.
+
 To avoid storing the password one can deploy the client public key in the server.
 
 .. code:: python
