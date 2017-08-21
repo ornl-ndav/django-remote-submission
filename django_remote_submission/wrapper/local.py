@@ -6,17 +6,22 @@ which works with the local file system, so that tests can be run on
 continuous integration servers.
 '''
 
+import logging
 import os
 import os.path
 import select
-from subprocess import Popen, PIPE
-from multiprocessing import Queue
+import threading
 from collections import namedtuple
+from queue import Queue
+from subprocess import PIPE, Popen
+
+from django.conf import settings
 from django.utils.timezone import now
+
 from .remote import RemoteWrapper
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class LocalWrapper(RemoteWrapper):
     """
@@ -65,27 +70,18 @@ class LocalWrapper(RemoteWrapper):
             ))
 
         return results
-
-    def process_queue(queue, stream):
-        '''
-        This can be seen as a consumer
-        '''
-        while True:
-            value  = queue.get()
-            if value is None:
-                # Poison pill means shutdown
-                queue.close()
-                break
-            current_time, content = value
-            if stream == sys.stdout:
-                stdout_handler(current_time, content)
-            else if stream == sys.stderr:
-                stderr_handler(current_time, content)
-            else:
-                logger.error("Invalid stream...")
+    
+    def _is_db_sqlite(self):
+        return True if 'sqlite' in settings.DATABASES['default']['ENGINE'] else False
 
     def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
                      stderr_handler=None):
+        '''
+        The output of the command is written in a queue in non-sqlite DB.
+        The command is faster writting output than Django writting that output
+        in the DB. Some output is lost. The solution is to use Queues.
+        However ir does not work for SQLite: concurrency problems. Thus the if.
+        '''
         if timeout is not None:
             args = ['timeout', '{}s'.format(timeout.total_seconds())] + args
 
@@ -95,39 +91,52 @@ class LocalWrapper(RemoteWrapper):
 
         rlist = [process.stdout, process.stderr]
 
-        stdout_queue = Queue()
-        stderr_queue = Queue()
+        queue = Queue()
 
-        stdout_process = Process(target=process_queue, args=(stdout_queue, sys.stdout, ))
-        stdout_process.start()
-        stderr_process = Process(target=process_queue, args=(stderr_queue, sys.stderr, ))
-        stderr_process.start()
+        def process_queue(queue):
+            ''' Writes queue to the DB '''
+            while True:
+                print("here")
+                value = queue.get()
+                if value is None:
+                    break
+                current_time, content, func = value
+                func(current_time, content)
+                queue.task_done()
 
-        logger.debug('before loop')
+        t = threading.Thread(
+            target=process_queue,
+            args=(queue,),
+        )
+        t.start()
+
+        logger.debug('Reading the process stdout / stderr')
         while process.poll() is None:
             ready, _, _ = select.select(rlist, [], [])
 
             current_time = now()
             if process.stdout in ready:
                 stdout = process.stdout.readline()
-
-                if stdout != '':
-                    # stdout_handler(current_time, stdout)
-                    stdout_queue.put((current_time, stdout))
-
+                
+                if stdout is not None and stdout != '':
+                    if self._is_db_sqlite():
+                        stdout_handler(current_time, stdout)
+                    else:
+                        queue.put([current_time, stdout, stdout_handler])
 
             if process.stderr in ready:
                 stderr = process.stderr.readline()
+                
+                if stderr is not None and stderr != '':
+                    if self._is_db_sqlite():
+                        stderr_handler(current_time, stderr)
+                    else:
+                        queue.put([current_time, stderr, stderr_handler])
 
-                if stderr != '':
-                    # stderr_handler(current_time, stderr)
-                    stderr_queue.put((current_time, stderr))
-
-        stdout_queue.put(None)
-        stdout_process.join()
-        stderr_queue.put(None)
-        stderr_process.join()
-
-        logger.debug('after loop')
+        queue.join()
+        queue.put(None)
+        t.join()
+        
+        logger.debug('Done reading the process stdout / stderr')
 
         return process.returncode == 0

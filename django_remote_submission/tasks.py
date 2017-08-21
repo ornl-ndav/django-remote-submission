@@ -292,7 +292,7 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
 
         results = []
         for attr in file_attrs:
-            print('{!r}'.format(attr))
+            # logger.debug('Listing directory: {!r}'.format(attr))
 
             if attr is script_attr:
                 continue
@@ -301,10 +301,11 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
                 continue
 
             if not is_matching(attr.filename, store_results):
-                print('is_matching: {}'.format(attr.filename))
+                # logger.debug('Listing directory: is_matching: {}'.format(attr.filename))
                 continue
             else:
-                print('not is_matching: {}'.format(attr.filename))
+                # logger.debug('Listing directory: not is_matching: {}'.format(attr.filename))
+                continue
 
             result = Result.objects.create(
                 remote_filename=attr.filename,
