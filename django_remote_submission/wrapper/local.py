@@ -10,6 +10,7 @@ import os
 import os.path
 import select
 from subprocess import Popen, PIPE
+from multiprocessing import Queue
 from collections import namedtuple
 from django.utils.timezone import now
 from .remote import RemoteWrapper
@@ -65,6 +66,24 @@ class LocalWrapper(RemoteWrapper):
 
         return results
 
+    def process_queue(queue, stream):
+        '''
+        This can be seen as a consumer
+        '''
+        while True:
+            value  = queue.get()
+            if value is None:
+                # Poison pill means shutdown
+                queue.close()
+                break
+            current_time, content = value
+            if stream == sys.stdout:
+                stdout_handler(current_time, content)
+            else if stream == sys.stderr:
+                stderr_handler(current_time, content)
+            else:
+                logger.error("Invalid stream...")
+
     def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
                      stderr_handler=None):
         if timeout is not None:
@@ -76,6 +95,14 @@ class LocalWrapper(RemoteWrapper):
 
         rlist = [process.stdout, process.stderr]
 
+        stdout_queue = Queue()
+        stderr_queue = Queue()
+
+        stdout_process = Process(target=process_queue, args=(stdout_queue, sys.stdout, ))
+        stdout_process.start()
+        stderr_process = Process(target=process_queue, args=(stderr_queue, sys.stderr, ))
+        stderr_process.start()
+
         logger.debug('before loop')
         while process.poll() is None:
             ready, _, _ = select.select(rlist, [], [])
@@ -85,13 +112,21 @@ class LocalWrapper(RemoteWrapper):
                 stdout = process.stdout.readline()
 
                 if stdout != '':
-                    stdout_handler(current_time, stdout)
+                    # stdout_handler(current_time, stdout)
+                    stdout_queue.put((current_time, stdout))
+
 
             if process.stderr in ready:
                 stderr = process.stderr.readline()
 
                 if stderr != '':
-                    stderr_handler(current_time, stderr)
+                    # stderr_handler(current_time, stderr)
+                    stderr_queue.put((current_time, stderr))
+
+        stdout_queue.put(None)
+        stdout_process.join()
+        stderr_queue.put(None)
+        stderr_process.join()
 
         logger.debug('after loop')
 
