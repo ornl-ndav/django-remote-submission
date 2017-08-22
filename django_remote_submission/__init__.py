@@ -11,6 +11,6 @@ the models to make this function work.
 
 """
 
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 
 default_app_config = 'django_remote_submission.apps.DjangoRemoteSubmissionConfig'
