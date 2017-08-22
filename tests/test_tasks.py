@@ -170,6 +170,7 @@ def runs_remotely(request):
         # return RemoteWrapper
         return False
     elif pytest.config.getoption('--ci'):
+        # Skip in ci because can't use the RemoteWrapper
         pytest.skip('running on continuous integration')
     else:
         return True
@@ -207,6 +208,10 @@ def test_submit_job_normal_usage(env, job, job_model_saved, runs_remotely):
     assert job_model_saved.call_count == 2
 
 
+@pytest.mark.skipif(
+    pytest.config.getoption('--ci'),
+    reason='Does not work on continuous integration.',
+)
 @pytest.mark.parametrize("runs_remotely", ["Remote"])
 @pytest.mark.django_db
 @pytest.mark.job_program('''\
