@@ -3,6 +3,11 @@
 History
 -------
 
+1.1.3 (2017-08-19)
++++++++++++++++++++
+
+* Local wrapper runs in all DBs without truncation.
+
 1.1.2 (2017-08-18)
 +++++++++++++++++++
 

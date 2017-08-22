@@ -73,17 +73,14 @@ class LocalWrapper(RemoteWrapper):
             ))
 
         return results
-    
-    def _is_db_sqlite(self):
-        return True if 'sqlite' in settings.DATABASES['default']['ENGINE'] else False
 
     def exec_command(self, args, workdir, timeout=None, stdout_handler=None,
                      stderr_handler=None):
         '''
-        The output of the command is written in a queue in non-sqlite DB.
-        The command is faster writting output than Django writting that output
-        in the DB. Some output is lost. The solution is to use Queues.
-        However ir does not work for SQLite: concurrency problems. Thus the if.
+        Altouhgh Log.LIVE is possible, the Local does not support True Live Log.
+        In local for large outputs, it looks like stdXXX_handle takes too long
+        and the buffer of the process over runs and the log gets truncated
+
         '''
         if timeout is not None:
             args = ['timeout', '{}s'.format(timeout.total_seconds())] + args
@@ -94,24 +91,8 @@ class LocalWrapper(RemoteWrapper):
 
         rlist = [process.stdout, process.stderr]
 
-        queue = Queue()
-
-        def process_queue(queue):
-            ''' Writes queue to the DB '''
-            while True:
-                print("here")
-                value = queue.get()
-                if value is None:
-                    break
-                current_time, content, func = value
-                func(current_time, content)
-                queue.task_done()
-
-        t = threading.Thread(
-            target=process_queue,
-            args=(queue,),
-        )
-        t.start()
+        stdout_list = []
+        stderr_list = []
 
         logger.debug('Reading the process stdout / stderr')
         while process.poll() is None:
@@ -120,26 +101,22 @@ class LocalWrapper(RemoteWrapper):
             current_time = now()
             if process.stdout in ready:
                 stdout = process.stdout.readline()
-                
                 if stdout is not None and stdout != '':
-                    if self._is_db_sqlite():
-                        stdout_handler(current_time, stdout)
-                    else:
-                        queue.put([current_time, stdout, stdout_handler])
-
+                    # stdout_handler(current_time, stdout)
+                    stdout_list.append((current_time, stdout))
+              
             if process.stderr in ready:
                 stderr = process.stderr.readline()
-                
                 if stderr is not None and stderr != '':
-                    if self._is_db_sqlite():
-                        stderr_handler(current_time, stderr)
-                    else:
-                        queue.put([current_time, stderr, stderr_handler])
+                    # stderr_handler(current_time, stderr)
+                    stderr_list.append((current_time, stderr))
+    
+        # Here we store the logs in the DB
+        for current_time, stdout in stdout_list:
+            stdout_handler(current_time, stdout)
+        for current_time, stderr in stderr_list:
+            stderr_handler(current_time, stderr)
 
-        queue.join()
-        queue.put(None)
-        t.join()
-        
         logger.debug('Done reading the process stdout / stderr')
 
         return process.returncode == 0

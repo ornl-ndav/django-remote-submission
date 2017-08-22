@@ -145,7 +145,7 @@ to the master branch, update ``HISTORY.rst`` and bump the version.
    $ git pull origin master
    $ source venv/bin/activate
    (venv)$ python -m pip install -r requirements_dev.txt
-   (venv)$ bumpversion major  # or minor or patch
+   (venv)$ bumpversion patch  # or minor or major
    $ git push origin master
    $ git push origin --tags
 

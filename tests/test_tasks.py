@@ -207,6 +207,7 @@ def test_submit_job_normal_usage(env, job, job_model_saved, runs_remotely):
     assert job_model_saved.call_count == 2
 
 
+@pytest.mark.parametrize("runs_remotely", ["Remote"])
 @pytest.mark.django_db
 @pytest.mark.job_program('''\
 from __future__ import print_function
@@ -217,6 +218,7 @@ for i in range(5):
     time.sleep(0.1)
 ''')
 def test_submit_job_multiple_streams(env, job, runs_remotely):
+    ''' This one cannot run in local as the Live Log is not real '''
     from django_remote_submission.models import Job, Log
     from django_remote_submission.tasks import submit_job_to_server
     import datetime
