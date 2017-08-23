@@ -36,4 +36,8 @@ With this in mind, the Reflectivity Fitting Web Interface has been developed [@d
 
 Currently the fitting routines are written for the software package REFL1D [@Kienzle]. The management of the fitting routines is performed with the DRS. The DRS transparently submits the jobs to a cluster and provides real-time monitoring of the remote jobs and their associated logs. The user can thus track the status of the jobs and eventually inspect the associated logs. If the job was successful, DRS gathers the output data and transfer them to the webserver. Finally, the web interface provides a user friendly display and visualization of those data.
 
+# Acknowledgments
+
+This research used resources at the High Flux Isotope Reactor and Spallation Neutron Source, a DOE Office of Science User Facility operated by the Oak Ridge National Laboratory.
+
 # References
