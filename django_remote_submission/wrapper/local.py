@@ -9,16 +9,9 @@ continuous integration servers.
 import logging
 import os
 import os.path
-import select
-import threading
 from collections import namedtuple
-try:
-    from queue import Queue
-except ImportError:
-    from Queue import Queue
 from subprocess import PIPE, Popen
 
-from django.conf import settings
 from django.utils.timezone import now
 
 from .remote import RemoteWrapper
@@ -80,42 +73,22 @@ class LocalWrapper(RemoteWrapper):
         Altouhgh Log.LIVE is possible, the Local does not support True Live Log.
         In local for large outputs, it looks like stdXXX_handle takes too long
         and the buffer of the process over runs and the log gets truncated
-
         '''
         if timeout is not None:
             args = ['timeout', '{}s'.format(timeout.total_seconds())] + args
 
         logger.info('{!r}'.format(args))
-        process = Popen(args, bufsize=1, stdout=PIPE, stderr=PIPE,
+        process = Popen(args, stdout=PIPE, stderr=PIPE,
                         cwd=self.workdir, universal_newlines=True)
+        process.wait()
 
-        rlist = [process.stdout, process.stderr]
-
-        stdout_list = []
-        stderr_list = []
-
-        logger.debug('Reading the process stdout / stderr')
-        while process.poll() is None:
-            ready, _, _ = select.select(rlist, [], [])
-
+        for line in process.stdout.readlines():
             current_time = now()
-            if process.stdout in ready:
-                stdout = process.stdout.readline()
-                if stdout is not None and stdout != '':
-                    # stdout_handler(current_time, stdout)
-                    stdout_list.append((current_time, stdout))
-              
-            if process.stderr in ready:
-                stderr = process.stderr.readline()
-                if stderr is not None and stderr != '':
-                    # stderr_handler(current_time, stderr)
-                    stderr_list.append((current_time, stderr))
-    
-        # Here we store the logs in the DB
-        for current_time, stdout in stdout_list:
-            stdout_handler(current_time, stdout)
-        for current_time, stderr in stderr_list:
-            stderr_handler(current_time, stderr)
+            stdout_handler(current_time, line)
+
+        for line in process.stderr.readlines():
+            current_time = now()
+            stderr_handler(current_time, line)
 
         logger.debug('Done reading the process stdout / stderr')
 

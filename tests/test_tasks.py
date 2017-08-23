@@ -196,7 +196,7 @@ def test_submit_job_normal_usage(env, job, job_model_saved, runs_remotely):
 
     assert Log.objects.count() == 5
 
-    min_delta = datetime.timedelta(seconds=0.05)
+    min_delta = datetime.timedelta(microseconds=100)
     max_delta = datetime.timedelta(seconds=0.3)
     for log1, log2 in pairwise(Log.objects.all()):
         delta = log2.time - log1.time
