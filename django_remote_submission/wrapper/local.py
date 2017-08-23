@@ -80,15 +80,18 @@ class LocalWrapper(RemoteWrapper):
         logger.info('{!r}'.format(args))
         process = Popen(args, stdout=PIPE, stderr=PIPE,
                         cwd=self.workdir, universal_newlines=True)
-        process.wait()
 
-        for line in process.stdout.readlines():
-            current_time = now()
-            stdout_handler(current_time, line)
+        stdout, stderr = process.communicate()
 
-        for line in process.stderr.readlines():
-            current_time = now()
-            stderr_handler(current_time, line)
+        for line in stdout.split('\n'):
+            if line.strip():
+                current_time = now()
+                stdout_handler(current_time, line+'\n')
+        
+        for line in stderr.split('\n'):
+            if line.strip():
+                current_time = now()
+                stderr_handler(current_time, line+'\n')
 
         logger.debug('Done reading the process stdout / stderr')
 

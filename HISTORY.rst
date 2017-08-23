@@ -6,6 +6,11 @@ History
 1.1.5 (2017-08-23)
 +++++++++++++++++++
 
+* Local Wrapper uses process.comunicate
+
+1.1.5 (2017-08-23)
++++++++++++++++++++
+
 * Local Wrapper does no support Live Log ever.
 
 1.1.4 (2017-08-19)
