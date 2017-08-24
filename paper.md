@@ -5,18 +5,18 @@ tags:
   - job submission
   - batch scheduling
 authors:
-- name: Tanner C. Hobson
-   orcid: 0000-0002-6269-7881
-   affiliation: 1
-- name: Mathieu Doucet
-   orcid: 0000-0002-5560-6478
-   affiliation: 1
- - name: Ricardo M. Ferraz Leal
-   orcid: 0000-0002-9931-8304
-   affiliation: 1
+  - name: Tanner C. Hobson
+    orcid: 0000-0002-6269-7881
+    affiliation: 1
+  - name: Mathieu Doucet
+    orcid: 0000-0002-5560-6478
+    affiliation: 1
+  - name: Ricardo M. Ferraz Leal
+    orcid: 0000-0002-9931-8304
+    affiliation: 1
 affiliations:
- - name: Oak Ridge National Laboratory
-   index: 1
+  - name: Oak Ridge National Laboratory
+    index: 1
 date: 24 July 2017
 bibliography: paper.bib
 ---
@@ -31,7 +31,7 @@ In addition DRS provides real time monitoring of the progress of Jobs and associ
 
 # Practical case
 
-The Liquids Reflectometer (LR) at the Oak Ridge National Laboratory’s Spallation Neutron Source (SNS) [@Mason2006] provides neutron reflectivity capability for an average of about 30 experiments each year. In recent years, there has been a large effort to streamline the data processing and analysis for the instrument. While much of the data reduction can be automated, data analysis remains something that needs to be done by scientists. 
+The Liquids Reflectometer (LR) at the Oak Ridge National Laboratory’s Spallation Neutron Source (SNS) [@Mason2006] provides neutron reflectivity capability for an average of about 30 experiments each year. In recent years, there has been a large effort to streamline the data processing and analysis for the instrument. While much of the data reduction can be automated, data analysis remains something that needs to be done by scientists.
 With this in mind, the Reflectivity Fitting Web Interface has been developed [@doucet2017]. It provides a smooth data analysis interface, capturing the process of setting up and executing fits while reducing the need for installing software or writing Python scripts.
 
 Currently the fitting routines are written for the software package REFL1D [@Kienzle]. The management of the fitting routines is performed with the DRS. The DRS transparently submits the jobs to a cluster and provides real-time monitoring of the remote jobs and their associated logs. The user can thus track the status of the jobs and eventually inspect the associated logs. If the job was successful, DRS gathers the output data and transfer them to the webserver. Finally, the web interface provides a user friendly display and visualization of those data.
