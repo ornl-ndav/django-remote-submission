@@ -11,6 +11,9 @@ Django Remote Submission
 .. image:: https://codecov.io/gh/ornl-ndav/django-remote-submission/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/ornl-ndav/django-remote-submission
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.848749.svg
+   :target: https://doi.org/10.5281/zenodo.848749
+
 A Django application to manage long running job submission, including starting the job, saving logs, and storing results.
 
 Features
