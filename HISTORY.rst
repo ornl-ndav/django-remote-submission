@@ -3,6 +3,11 @@
 History
 -------
 
+1.2.1 (2017-11-13)
++++++++++++++++++++
+
+* Corrected Channels version in requirements.
+
 1.2 (2017-11-13)
 +++++++++++++++++++
 
