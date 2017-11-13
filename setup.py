@@ -57,6 +57,8 @@ setup(
         'celery>=4.1',
         # Add websocket connections to Django
         'channels>=1.1.6',
+        # Filter for DRF
+        'django-filter>=1.1.0',
     ],
     # install_requires=reqs,
     license="ISCL",

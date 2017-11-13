@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     'rest_framework',
     'channels',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -127,6 +128,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Folder where uploaded files go
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Celery configuration
 

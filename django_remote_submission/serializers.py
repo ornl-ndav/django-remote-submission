@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 
-from .models import Server, Job, Log
+from .models import Server, Job, Log, Result
 
 
 class ServerSerializer(serializers.ModelSerializer):
@@ -66,3 +66,10 @@ class LogSerializer(serializers.ModelSerializer):
     class Meta:  # noqa: D101
         model = Log
         fields = ('id', 'time', 'content', 'stream', 'job')
+
+
+class ResultSerializer(serializers.ModelSerializer):
+
+    class Meta:  # noqa: D101
+        model = Result
+        fields = ('id', 'remote_filename', 'local_file', 'job')

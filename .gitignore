@@ -118,7 +118,7 @@ dump.rdb
 .settings/
 
 /media
-/example/results/
+/example/media/
 
 *.bak
 

@@ -14,13 +14,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import include, url
+from django.conf.urls.static import static
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from .views import (
-    IndexView, ServerDetail, ServerList, JobDetail, JobList,
-    ExampleJobStatusView, ExampleJobLogView,
-)
 
+from .views import (ExampleJobLogView, ExampleJobStatusView, IndexView,
+                    JobDetail, JobList, ServerDetail, ServerList)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -36,3 +36,6 @@ urlpatterns = [
     url(r'^jobs/$', JobList.as_view(), name='job-list'),
     url(r'^api/', include('django_remote_submission.urls')),
 ]
+
+# Serving files uploaded by a user during development
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

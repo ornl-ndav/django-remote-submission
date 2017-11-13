@@ -3,7 +3,12 @@
 History
 -------
 
-1.1.5 (2017-08-23)
+1.2 (2017-11-13)
++++++++++++++++++++
+
+* Added django-filter to the REST API. Filtering in the URL is now possible. E.g.: http://localhost:8001/api/jobs/?title=Test%20Job
+
+1.1.6 (2017-08-23)
 +++++++++++++++++++
 
 * Local Wrapper uses process.comunicate
