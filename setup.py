@@ -44,7 +44,7 @@ setup(
     include_package_data=True,
     install_requires=[
         # Web framework
-        'django>=1.11.4',
+        'django>=2.0.2',
         # Helpful utilities for creating models in Django
         'django-model-utils>=3.0.0',
         # Library to help manage REST APIs
@@ -56,7 +56,7 @@ setup(
         # Celery
         'celery>=4.1',
         # Add websocket connections to Django
-        'channels>=1.1.6',
+        'channels>=2.0',
         # Filter for DRF
         'django-filter>=1.1.0',
     ],

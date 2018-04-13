@@ -1,7 +1,7 @@
 -r requirements.txt
 
 # Check code coverage
-coverage==4.2
+coverage>=4.2
 pytest-cov>=2.5.1
 
 # Mock functions for testing
@@ -20,10 +20,11 @@ tox>=1.7.0
 django-environ>=0.4.0
 
 # For a nicer testing setup
-pytest
+pytest>=3.2.1
 
 # For testing Django with pytest
-pytest-django
+pytest-django>=3.1.2
+
 
 # For mocking different functions
-pytest-mock
+pytest-mock>=1.6.2

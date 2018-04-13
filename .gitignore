@@ -121,4 +121,5 @@ dump.rdb
 /example/media/
 
 *.bak
+.pytest_cache/
 

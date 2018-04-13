@@ -1,7 +1,7 @@
 -r requirements.txt
 
 # Utility to manage upgrading the version of the package
-bumpversion==0.5.3
+bumpversion>=0.5.3
 
 # Utility to load Python binaries
-wheel==0.29.0
+wheel>=0.29.0

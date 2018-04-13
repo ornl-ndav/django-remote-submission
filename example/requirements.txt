@@ -2,5 +2,5 @@
 celery[redis]
 django
 django-celery-results
-asgi_redis
+channels_redis~=2.0
 django-environ
