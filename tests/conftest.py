@@ -65,7 +65,7 @@ def pytest_configure():
                 "BACKEND": "asgiref.inmemory.ChannelLayer",
             },
         },
-        ASGI_APPLICATION="django_remote_submission.routing.channel_routing",
+        ASGI_APPLICATION="django_remote_submission.routing.application",
         # Celery configuration
         BROKER_BACKEND='memory',
         CELERY_ALWAYS_EAGER=True,

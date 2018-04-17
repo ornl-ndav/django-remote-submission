@@ -139,7 +139,7 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
 
 # Channels
-ASGI_APPLICATION = "server.routing.channel_routing"
+ASGI_APPLICATION = "server.routing.application"
 CHANNEL_LAYERS = {
     'default': {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
