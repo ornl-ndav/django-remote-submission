@@ -35,17 +35,20 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+
+    #
+    'channels',
+    'django_remote_submission',
+    'django_celery_results',
+    'rest_framework',
+    'django_filters',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_remote_submission',
-    'django_celery_results',
-    'rest_framework',
-    'channels',
-    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -140,6 +143,7 @@ CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
 
 # Channels
 ASGI_APPLICATION = "server.routing.application"
+
 CHANNEL_LAYERS = {
     'default': {
         "BACKEND": "channels_redis.core.RedisChannelLayer",

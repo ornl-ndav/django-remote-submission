@@ -1,46 +1,94 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <script
-      src="https://code.jquery.com/jquery-3.2.1.min.js"
-      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-      crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <title>Django Remote Submission Example</title>
-      <style>
-        body {
-            margin-top: 60px;
-            padding: 20px;
-        }
-        .label-initial {
-          background-color: #777777;
-        }
-        .label-initial[href]:hover,
-        .label-initial[href]:focus {
-          background-color: #777777;
-        }
-        .label-submitted {
-          background-color: #00451d;
-        }
-        .label-submitted[href]:hover,
-        .label-submitted[href]:focus {
-          background-color: #00451d;
-        }
-        .label-failure {
-          background-color: #d9534f;
-        }
-        .label-failure[href]:hover,
-        .label-failure[href]:focus {
-          background-color: #c9302c;
-        }
-    </style>
-  </head>
-  <body>
-    {% block content %}
+
+<head>
+  <meta charset="UTF-8">
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+    crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+    crossorigin="anonymous"></script>
+  <title>Django Remote Submission Example</title>
+  <style>
+    body {
+      margin-top: 0px;
+      padding: 20px;
+    }
+
+    .label-initial {
+      background-color: #777777;
+    }
+
+    .label-initial[href]:hover,
+    .label-initial[href]:focus {
+      background-color: #777777;
+    }
+
+    .label-submitted {
+      background-color: #00451d;
+    }
+
+    .label-submitted[href]:hover,
+    .label-submitted[href]:focus {
+      background-color: #00451d;
+    }
+
+    .label-failure {
+      background-color: #d9534f;
+    }
+
+    .label-failure[href]:hover,
+    .label-failure[href]:focus {
+      background-color: #c9302c;
+    }
+  </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="{% url 'index' %}">Home</a>
+          </div>
+
+          <!-- Collect the nav links, forms, and other content for toggling -->
+          <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+              <li><a href="{% url 'example' %}">Submit Example Job</a></li>
+              <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">API <span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                      <li><a href="{% url 'server-list' %}">Server List</a></li>
+                      <li><a href="{% url 'job-list' %}">Job List</a></li>
+                  </ul>
+                </li>
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="{% url 'admin:index' %}">Admin</a></li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Account <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="{% url 'login' %}">Login</a></li>
+                  <li><a href="{% url 'logout' %}">Logout</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+      </nav>
+  {% block content %}
     Add something here, yo
-    {% endblock %}
-  </body>
+  {% endblock %}
+</body>
+
 </html>

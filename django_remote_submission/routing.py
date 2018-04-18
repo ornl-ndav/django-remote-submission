@@ -13,7 +13,7 @@
 # ]
 
 
-from django.urls import re_path
+from django.urls import path
 
 from channels.http import AsgiHandler
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -38,8 +38,8 @@ application = ProtocolTypeRouter({
     "websocket": AuthMiddlewareStack(
         URLRouter([
             # URLRouter just takes standard Django path() or url() entries.
-            re_path(r'^/job-user/$', JobUserConsumer),
-            re_path(r'^/job-log/(?P<job_pk>[0-9]+)/$', JobLogConsumer),
+            path('ws/job-user/', JobUserConsumer),
+            path('ws/job-log/<int:job_pk>/', JobLogConsumer),
         ]),
     ),
 

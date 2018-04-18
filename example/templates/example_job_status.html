@@ -50,7 +50,7 @@ document.getElementById('example-create-job').addEventListener('click', () => {
   post(window.location);
 }, true);
 
-socket = new ReconnectingWebSocket("ws://" + window.location.host + "/job-user/");
+socket = new ReconnectingWebSocket("ws://" + window.location.host + "/ws/job-user/");
 
 socket.onmessage = function(e) {
   var { job_id, title, status, modified } = JSON.parse(e.data),

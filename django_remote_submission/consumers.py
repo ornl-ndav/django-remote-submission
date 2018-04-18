@@ -62,11 +62,10 @@
 #         message.reply_channel,
 #     )
 
-from pprint import
+from pprint import pprint
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from .exceptions import ClientError
 
 class JobUserConsumer(AsyncJsonWebsocketConsumer):
     """

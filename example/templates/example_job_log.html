@@ -18,10 +18,10 @@
   <a id="cancel" class="btn btn-default" data-toggle="tooltip" data-placement="top" onclick="window.history.back()"
 73	            href="#" title="Go back.">Go Back</a>
 </div>
-<script src="https://cdn.rawgit.com/joewalnes/reconnecting-websocket/fd7c819bb15eeee3452c17e317c0a3664c442965/reconnecting-websocket.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
 <script>
 
-socket = new ReconnectingWebSocket("ws://" + window.location.host + "/job-log/{{ job_pk }}/");
+socket = new ReconnectingWebSocket("ws://" + window.location.host + "/ws/job-log/{{ job_pk }}/");
 
 socket.onmessage = function(e) {
   var { log_id, time, content, stream } = JSON.parse(e.data);
