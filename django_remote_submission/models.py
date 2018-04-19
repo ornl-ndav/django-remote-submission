@@ -276,6 +276,46 @@ class Job(TimeStampedModel):
             cleaned_data = super(Job, self).clean()
             return cleaned_data
 
+    # def save(self, *args, **kwargs):
+    #     '''
+    #     From Two scoops of django: "Use signals as a last resort."
+    #     '''
+
+    #     super().save(*args, **kwargs)
+    #     # Post save
+
+    #     import channels.layers
+    #     from asgiref.sync import async_to_sync
+
+    #     def send_message(event):
+    #         message = event['text']
+    #         channel_layer = channels.layers.get_channel_layer()
+    #         # Send message to WebSocket
+    #         async_to_sync(channel_layer.send)(text_data=json.dumps(
+    #             message
+    #         ))
+
+    #     user = self.owner
+    #     group_name = 'job-user-{}'.format(user.username)
+
+    #     message = {
+    #         'job_id': self.id,
+    #         'title': self.title,
+    #         'status': self.status,
+    #         'modified': self.modified.isoformat(),
+    #     }
+
+    #     channel_layer = channels.layers.get_channel_layer()
+
+    #     async_to_sync(channel_layer.group_send)(
+    #         group_name,
+    #         {
+    #             'type': 'send_message',
+    #             'text': message
+    #         }
+    #     )
+
+
 
 @python_2_unicode_compatible
 class Log(models.Model):
