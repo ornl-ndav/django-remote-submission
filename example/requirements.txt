@@ -1,6 +1,6 @@
--e..
+-e ..
 celery[redis]
-django
+django~=2.0
 django-celery-results
 channels_redis~=2.0
 django-environ

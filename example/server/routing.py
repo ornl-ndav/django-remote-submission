@@ -14,8 +14,6 @@ import django_remote_submission.routing
 
 
 application = ProtocolTypeRouter({
-
-    # WebSocket handler
     "websocket": AuthMiddlewareStack(
         URLRouter([
             url("", django_remote_submission.routing.application),

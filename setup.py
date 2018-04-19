@@ -56,7 +56,7 @@ setup(
         # Celery
         'celery>=4.1',
         # Add websocket connections to Django
-        'channels>=2.0',
+        'channels>=2.1.1',
         # Filter for DRF
         'django-filter>=1.1.0',
     ],

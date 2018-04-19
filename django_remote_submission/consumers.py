@@ -62,96 +62,120 @@
 #         message.reply_channel,
 #     )
 
+import json
 from pprint import pprint
+from channels.generic.websocket import AsyncJsonWebsocketConsumer, WebsocketConsumer, AsyncWebsocketConsumer
 
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from .models import Job
+from asgiref.sync import async_to_sync
 
 
-class JobUserConsumer(AsyncJsonWebsocketConsumer):
-    """
-    This chat consumer handles websocket connections for chat clients.
-    It uses AsyncJsonWebsocketConsumer, which means all the handling functions
-    must be async functions, and any sync work (like ORM access) has to be
-    behind database_sync_to_async or sync_to_async. For more, read
-    http://channels.readthedocs.io/en/latest/topics/consumers.html
-    """
-
-    ##### WebSocket event handlers
+class JobUserConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        """
-        Called when the websocket is handshaking as part of initial connection.
-        """
-        print("connect")
+        '''
+        Creates group, add to the valid channels
+        Connects and sends to the browser the last jobs
+        '''
+        user = self.scope["user"]
+        self.group_name = 'job-user-{}'.format(user.username)
 
-        # Are they logged in?
-        if self.scope["user"].is_anonymous:
-            # Reject the connection
-            await self.close()
-        else:
-            # Accept the connection
-            await self.accept()
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
 
+        await self.accept()
+        await self.send_last_jobs(user)
 
-    async def disconnect(self, code):
-        """
-        Called when the WebSocket closes for any reason.
-        """
-        print("disconnect")
-        pprint(code)
+    async def disconnect(self, close_code):
 
-
-    async def receive_json(self, content, **kwargs):
-        """
-        Called when we get a text frame. Channels will JSON-decode the payload
-        for us and pass it as the first argument.
-        """
-        # Messages will have a "command" key we can switch on
-        print("receive_json")
-        pprint(content)
-        pprint(kwargs)
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
 
 
-class JobLogConsumer(AsyncJsonWebsocketConsumer):
-    """
-    This chat consumer handles websocket connections for chat clients.
-    It uses AsyncJsonWebsocketConsumer, which means all the handling functions
-    must be async functions, and any sync work (like ORM access) has to be
-    behind database_sync_to_async or sync_to_async. For more, read
-    http://channels.readthedocs.io/en/latest/topics/consumers.html
-    """
+    async def send_last_jobs(self, user):
 
-    ##### WebSocket event handlers
+        last_jobs = user.jobs.order_by('-modified')[:10]
+
+        for job in last_jobs:
+
+            message = {
+                'job_id': job.id,
+                'title': job.title,
+                'status': job.status,
+                'modified': job.modified.isoformat(),
+            }
+
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    'type': 'send_message',
+                    'text': message
+                }
+            )
+
+    async def send_message(self, event):
+        message = event['text']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps(
+            message
+        ))
+
+
+class JobLogConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        """
-        Called when the websocket is handshaking as part of initial connection.
-        """
-        print("connect")
+        '''
+        Creates group, add to the valid channels
+        Connects and sends to the browser the log
+        '''
+        job_pk = self.scope['url_route']['kwargs']['job_pk']
+        self.group_name = 'job-log-{}'.format(job_pk)
 
-        # Are they logged in?
-        if self.scope["user"].is_anonymous:
-            # Reject the connection
-            await self.close()
-        else:
-            # Accept the connection
-            await self.accept()
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
 
+        await self.accept()
+        await self.send_log(job_pk)
 
-    async def disconnect(self, code):
-        """
-        Called when the WebSocket closes for any reason.
-        """
-        print("disconnect")
-        pprint(code)
+    async def disconnect(self, close_code):
 
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
 
-    async def receive_json(self, content, **kwargs):
-        """
-        Called when we get a text frame. Channels will JSON-decode the payload
-        for us and pass it as the first argument.
-        """
-        # Messages will have a "command" key we can switch on
-        print("receive_json")
-        pprint(content)
-        pprint(kwargs)
+    async def send_log(self, job_pk):
+
+        job = Job.objects.get(pk=job_pk)
+        logs = job.logs.order_by('time')
+
+        for log in logs:
+            message = {
+                    'log_id': log.id,
+                    'time': log.time.isoformat(),
+                    'content': log.content,
+                    'stream': log.stream,
+                }
+
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    'type': 'send_message',
+                    'text': message
+                }
+            )
+
+    async def send_message(self, event):
+        message = event['text']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps(
+            message
+        ))

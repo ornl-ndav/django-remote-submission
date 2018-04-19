@@ -220,5 +220,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'server': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     }
 }

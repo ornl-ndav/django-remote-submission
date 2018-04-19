@@ -53,6 +53,7 @@ document.getElementById('example-create-job').addEventListener('click', () => {
 socket = new ReconnectingWebSocket("ws://" + window.location.host + "/ws/job-user/");
 
 socket.onmessage = function(e) {
+  console.log("onmessage:", e);
   var { job_id, title, status, modified } = JSON.parse(e.data),
       tbody = $('#example-job-status-rows'),
       trs = tbody.children(),
@@ -87,14 +88,17 @@ socket.onmessage = function(e) {
 
   trs = tbody.children();
 
+  // Sort by date
   trs.sort((a, b) => {
-    return b.lastChild.textContent.localeCompare(a.lastChild.textContent);
+    return b.lastChild.previousSibling.textContent.localeCompare(a.lastChild.previousSibling.textContent);
   });
 
   trs.detach().appendTo(tbody);
 }
 
-socket.onopen = function() { }
+socket.onopen = function(e) {
+  console.log("onopen:", e);
+}
 
 // Call onopen directly if socket is already open
 if (socket.readyState == WebSocket.OPEN) socket.onopen();

@@ -7,6 +7,9 @@ from django_remote_submission.tasks import submit_job_to_server
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 import textwrap
+import logging
+
+logger = logging.getLogger(__name__)  # pylint: disable=C0103
 
 
 class IndexView(LoginRequiredMixin, TemplateView):
@@ -61,12 +64,14 @@ class ExampleJobStatusView(LoginRequiredMixin, TemplateView):
             port=settings.EXAMPLE_SERVER_PORT,
         )
 
+        logger.debug("Running job in {} using {}".format(server, interpreter))
+
         num_jobs = len(Job.objects.all())
 
         program = textwrap.dedent('''\
         from __future__ import print_function
         import time
-        for i in range(5):
+        for i in range(10):
             with open('django_remote_submission_example_out_{}.txt'.format(i), 'wt') as f:
                 print('Line {}'.format(i), file=f)
                 print('Line {}'.format(i))

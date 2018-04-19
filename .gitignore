@@ -123,3 +123,8 @@ dump.rdb
 *.bak
 .pytest_cache/
 
+#
+Pipfile
+Pipfile.lock
+
+
