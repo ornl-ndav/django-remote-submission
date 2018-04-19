@@ -62,7 +62,7 @@ def pytest_configure():
         },
         CHANNEL_LAYERS={
             'default': {
-                "BACKEND": "asgiref.inmemory.ChannelLayer",
+                "BACKEND": "channels.layers.InMemoryChannelLayer",
             },
         },
         ASGI_APPLICATION="django_remote_submission.routing.application",
