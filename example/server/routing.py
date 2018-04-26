@@ -1,10 +1,3 @@
-# from channels.routing import include
-
-
-# channel_routing = [
-#     include('django_remote_submission.routing.application', path=r'^'),
-# ]
-
 from django.conf.urls import url
 
 from channels.routing import ProtocolTypeRouter, URLRouter
