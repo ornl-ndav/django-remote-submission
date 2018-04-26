@@ -44,19 +44,19 @@ setup(
     include_package_data=True,
     install_requires=[
         # Web framework
-        'django>=1.11.4',
+        'django~=1.11.4',
         # Helpful utilities for creating models in Django
-        'django-model-utils>=3.0.0',
+        'django-model-utils~=3.0.0',
         # Library to help manage REST APIs
-        'djangorestframework>=3.6.3',
+        'djangorestframework~=3.6.3',
         # Library to manage connecting to remote hosts via SSH
-        'paramiko>=2.2.1',
+        'paramiko~=2.2.1',
         # Library to help manage python 2/3 compatibility
-        'six>=1.10.0',
+        'six~=1.10.0',
         # Celery
-        'celery>=4.1',
+        'celery~=4.1',
         # Add websocket connections to Django
-        'channels>=1.1.6',
+        'channels~=1.1.6',
     ],
     # install_requires=reqs,
     license="ISCL",
