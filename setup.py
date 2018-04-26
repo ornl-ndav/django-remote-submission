@@ -8,7 +8,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-version = '1.1.6'
+version = '1.1.7'
 
 if sys.argv[-1] == 'publish':
     try:
@@ -56,7 +56,7 @@ setup(
         # Celery
         'celery~=4.1',
         # Add websocket connections to Django
-        'channels~=1.1.6',
+        'channels~=1.1.7',
     ],
     # install_requires=reqs,
     license="ISCL",
