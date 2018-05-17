@@ -17,6 +17,7 @@ import socket
 import sys
 import time
 from threading import Thread
+from datetime import datetime
 
 import six
 from django.core.files import File
@@ -318,6 +319,66 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
             results.append(result)
 
     return { r.remote_filename: r.pk for r in results }
+
+
+@shared_task
+def copy_job_to_server(job_pk, password=None, public_key_filename=None, username=None,
+                         timeout=None, log_policy=LogPolicy.LOG_LIVE,
+                         store_results=None, remote=True):
+    """Submit a job to the remote server.
+
+    This can be used as a Celery task, if the library is installed and running.
+
+    :param int job_pk: the primary key of the :class:`models.Job` to submit
+    :param str password: the password of the user submitting the job
+    :param public_key_filename: the path where it is.
+    :param str username: the username of the user submitting, if it is
+        different from the owner of the job
+    :param datetime.timedelta timeout: the timeout for running the job
+    :param LogPolicy log_policy: the policy to use for logging
+    :param list(str) store_results: the patterns to use for the results to store
+    :param bool remote: Either runs this task locally on the host or in a remote server.
+
+    """
+
+    logger.debug("copy_job_to_server: %s", locals().keys())
+
+    wrapper_cls = RemoteWrapper if remote else LocalWrapper
+
+    job = Job.objects.get(pk=job_pk)
+
+    if username is None:
+        username = job.owner.username
+
+    wrapper = wrapper_cls(
+        hostname=job.server.hostname,
+        username=username,
+        port=job.server.port,
+    )
+
+    with wrapper.connect(password, public_key_filename):
+        wrapper.chdir(job.remote_directory)
+
+        with wrapper.open(job.remote_filename, 'wt') as f:
+            f.write(job.program)
+
+        time.sleep(1)
+
+        job.status = Job.STATUS.submitted
+        job.save()
+
+        log = Log(
+            time=datetime.now(),
+            content='File {} successfully copied to {}.'.format(
+                job.remote_filename, job.remote_directory,
+            ),
+            stream='stdout',
+            job=job,
+        )
+        log.save()
+
+    return { }
+
 
 
 @shared_task

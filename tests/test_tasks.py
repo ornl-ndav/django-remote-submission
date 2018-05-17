@@ -208,6 +208,29 @@ def test_submit_job_normal_usage(env, job, job_model_saved, runs_remotely):
     assert job_model_saved.call_count == 2
 
 
+@pytest.mark.django_db
+@pytest.mark.job_program('''\
+hello world
+''')
+def test_copy_job(env, job, job_model_saved, runs_remotely):
+    from django_remote_submission.models import Job, Log
+    from django_remote_submission.tasks import copy_job_to_server
+    import datetime
+
+    results = copy_job_to_server(
+        job.pk, env.remote_password, remote=runs_remotely
+    )
+
+    assert len(results) == 0
+
+    job = Job.objects.get(pk=job.pk)
+    assert job.status == Job.STATUS.submitted
+    
+    assert Log.objects.count() == 1
+    log = Log.objects.get()
+    assert "successfully copied" in log.content
+
+
 @pytest.mark.skipif(
     pytest.config.getoption('--ci'),
     reason='Does not work on continuous integration.',
