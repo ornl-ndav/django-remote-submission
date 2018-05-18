@@ -224,7 +224,7 @@ def test_copy_job(env, job, job_model_saved, runs_remotely):
     assert len(results) == 0
 
     job = Job.objects.get(pk=job.pk)
-    assert job.status == Job.STATUS.submitted
+    assert job.status == Job.STATUS.success
     
     assert Log.objects.count() == 1
     log = Log.objects.get()

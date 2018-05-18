@@ -17,7 +17,7 @@ import socket
 import sys
 import time
 from threading import Thread
-from datetime import datetime
+from django.utils import timezone
 
 import six
 from django.core.files import File
@@ -325,7 +325,7 @@ def submit_job_to_server(job_pk, password=None, public_key_filename=None, userna
 def copy_job_to_server(job_pk, password=None, public_key_filename=None, username=None,
                          timeout=None, log_policy=LogPolicy.LOG_LIVE,
                          store_results=None, remote=True):
-    """Submit a job to the remote server.
+    """Copy a job file to the remote server.
 
     This can be used as a Celery task, if the library is installed and running.
 
@@ -368,7 +368,7 @@ def copy_job_to_server(job_pk, password=None, public_key_filename=None, username
         job.save()
 
         log = Log(
-            time=datetime.now(),
+            time=timezone.now(),
             content='File {} successfully copied to {}.'.format(
                 job.remote_filename, job.remote_directory,
             ),
@@ -376,6 +376,9 @@ def copy_job_to_server(job_pk, password=None, public_key_filename=None, username
             job=job,
         )
         log.save()
+
+        job.status =  Job.STATUS.success
+        job.save()
 
     return { }
 
