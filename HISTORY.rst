@@ -3,6 +3,11 @@
 History
 -------
 
+2.1.0 (2018-05-18)
++++++++++++++++++++
+
+* Added task to only copy the job file. It does not run it.
+
 2.0.0 (2018-04-19)
 +++++++++++++++++++
 
