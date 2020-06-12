@@ -26,7 +26,6 @@ import uuid
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 
 from model_utils import Choices
@@ -50,7 +49,7 @@ class ListField(models.TextField):  # noqa: D101
 
         return ast.literal_eval(value)
 
-    def from_db_value(self, value, expression, connection, context):  # noqa: D102
+    def from_db_value(self, value, *args, **kwargs):  # noqa: D102
         return self.to_python(value)
 
     def get_prep_value(self, value):  # noqa: D102
@@ -64,7 +63,6 @@ class ListField(models.TextField):  # noqa: D101
         return self.get_db_prep_value(value)
 
 
-@python_2_unicode_compatible
 class Interpreter(TimeStampedModel):
     """Encapsulates the executable and required arguments for each interpreter.
 
@@ -106,7 +104,6 @@ class Interpreter(TimeStampedModel):
         return '{self.name} ({self.path})'.format(self=self)
 
 
-@python_2_unicode_compatible
 class Server(TimeStampedModel):
     """Encapsulates the remote server identifiers.
 
@@ -159,7 +156,6 @@ class Server(TimeStampedModel):
         return '{self.title} <{self.hostname}:{self.port}>'.format(self=self)
 
 
-@python_2_unicode_compatible
 class Job(TimeStampedModel):
     """Encapsulates the information about a particular job.
 
@@ -317,7 +313,6 @@ class Job(TimeStampedModel):
 
 
 
-@python_2_unicode_compatible
 class Log(models.Model):
     """Encapsulates a log message printed from a job.
 
@@ -396,7 +391,6 @@ def job_result_path(instance, filename):
     return 'results/{}/{}'.format(instance.job.uuid, filename)
 
 
-@python_2_unicode_compatible
 class Result(TimeStampedModel):
     """Encapsulates a resulting file produced by a job.
 
