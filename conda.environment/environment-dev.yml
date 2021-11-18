@@ -1,0 +1,26 @@
+name: djrems
+channels:
+  - conda-forge
+  - pyplan
+dependencies:
+  - python=3.8
+  - setuptools
+  - pip
+  - wheel
+  - six
+  - paramiko
+  - celery
+  - django
+  - djangorestframework
+  - django-channels
+  - django-environ
+  - asgiref
+  - flake8
+  - tox
+  - bumpversion
+  - coverage
+  - mock
+  - pytest
+  - pytest-cov
+  - pytest-django
+  - pytest-mock
